@@ -5,13 +5,9 @@ use TeamNiftyGmbH\NuxbeKnowledge\Actions\KnowledgeArticle\DeleteKnowledgeArticle
 use TeamNiftyGmbH\NuxbeKnowledge\Actions\KnowledgeArticle\UpdateKnowledgeArticle;
 use TeamNiftyGmbH\NuxbeKnowledge\Models\KnowledgeArticle;
 use TeamNiftyGmbH\NuxbeKnowledge\Models\KnowledgeArticleVersion;
-use TeamNiftyGmbH\NuxbeKnowledge\Models\KnowledgeCategory;
 
 test('can create knowledge article', function (): void {
-    $category = KnowledgeCategory::factory()->create();
-
     $result = CreateKnowledgeArticle::make([
-        'knowledge_category_id' => $category->getKey(),
         'title' => 'Test Article',
         'content' => '<p>Test content</p>',
     ])->validate()->execute();
@@ -22,10 +18,7 @@ test('can create knowledge article', function (): void {
 });
 
 test('creating article creates initial version', function (): void {
-    $category = KnowledgeCategory::factory()->create();
-
     $article = CreateKnowledgeArticle::make([
-        'knowledge_category_id' => $category->getKey(),
         'title' => 'Test Article',
         'content' => '<p>Test content</p>',
     ])->validate()->execute();

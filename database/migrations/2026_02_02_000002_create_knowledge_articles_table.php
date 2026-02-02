@@ -11,7 +11,6 @@ return new class extends Migration
         Schema::create('knowledge_articles', function (Blueprint $table): void {
             $table->id();
             $table->uuid();
-            $table->foreignId('knowledge_category_id')->constrained()->cascadeOnDelete();
             $table->string('title');
             $table->string('slug');
             $table->longText('content')->nullable();

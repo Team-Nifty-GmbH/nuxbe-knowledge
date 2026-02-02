@@ -4,7 +4,6 @@ namespace TeamNiftyGmbH\NuxbeKnowledge\Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 use TeamNiftyGmbH\NuxbeKnowledge\Models\KnowledgeArticle;
-use TeamNiftyGmbH\NuxbeKnowledge\Models\KnowledgeCategory;
 
 class KnowledgeArticleFactory extends Factory
 {
@@ -14,7 +13,6 @@ class KnowledgeArticleFactory extends Factory
     {
         return [
             'uuid' => $this->faker->uuid(),
-            'knowledge_category_id' => KnowledgeCategory::factory(),
             'title' => $this->faker->sentence(3),
             'slug' => $this->faker->slug(3),
             'content' => '<p>'.$this->faker->paragraphs(3, true).'</p>',

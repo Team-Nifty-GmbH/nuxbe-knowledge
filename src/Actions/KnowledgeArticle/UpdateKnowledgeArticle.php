@@ -27,7 +27,8 @@ class UpdateKnowledgeArticle extends FluxAction
             ->first();
 
         $changeSummary = $this->getData('change_summary');
-        $data = collect($this->data)->except('change_summary')->toArray();
+        $categories = $this->getData('categories');
+        $data = collect($this->data)->except(['change_summary', 'categories'])->toArray();
 
         if (! empty($data['content'])) {
             $converter = new HtmlConverter;
@@ -36,6 +37,10 @@ class UpdateKnowledgeArticle extends FluxAction
 
         $article->fill($data);
         $article->save();
+
+        if (is_array($categories)) {
+            $article->categories()->sync($categories);
+        }
 
         $lastVersion = resolve_static(KnowledgeArticleVersion::class, 'query')
             ->where('knowledge_article_id', $article->getKey())

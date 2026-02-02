@@ -17,9 +17,9 @@ class KnowledgeArticleForm extends FluxForm
     #[Locked]
     public ?int $id = null;
 
-    public bool $is_published = true;
+    public array $categories = [];
 
-    public ?int $knowledge_category_id = null;
+    public bool $is_published = true;
 
     public ?int $sort_order = null;
 

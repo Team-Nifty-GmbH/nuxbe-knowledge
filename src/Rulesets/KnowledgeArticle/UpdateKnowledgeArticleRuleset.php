@@ -2,10 +2,10 @@
 
 namespace TeamNiftyGmbH\NuxbeKnowledge\Rulesets\KnowledgeArticle;
 
+use FluxErp\Models\Category;
 use FluxErp\Rules\ModelExists;
 use FluxErp\Rulesets\FluxRuleset;
 use TeamNiftyGmbH\NuxbeKnowledge\Models\KnowledgeArticle;
-use TeamNiftyGmbH\NuxbeKnowledge\Models\KnowledgeCategory;
 
 class UpdateKnowledgeArticleRuleset extends FluxRuleset
 {
@@ -18,11 +18,6 @@ class UpdateKnowledgeArticleRuleset extends FluxRuleset
                 'required',
                 'integer',
                 app(ModelExists::class, ['model' => KnowledgeArticle::class]),
-            ],
-            'knowledge_category_id' => [
-                'nullable',
-                'integer',
-                app(ModelExists::class, ['model' => KnowledgeCategory::class]),
             ],
             'title' => [
                 'sometimes',
@@ -51,6 +46,14 @@ class UpdateKnowledgeArticleRuleset extends FluxRuleset
                 'nullable',
                 'string',
                 'max:255',
+            ],
+            'categories' => [
+                'nullable',
+                'array',
+            ],
+            'categories.*' => [
+                'integer',
+                app(ModelExists::class, ['model' => Category::class]),
             ],
         ];
     }

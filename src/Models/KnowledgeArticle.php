@@ -3,10 +3,10 @@
 namespace TeamNiftyGmbH\NuxbeKnowledge\Models;
 
 use FluxErp\Models\FluxModel;
+use FluxErp\Traits\Model\Categorizable;
 use FluxErp\Traits\Model\HasPackageFactory;
 use FluxErp\Traits\Model\HasUuid;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -18,7 +18,7 @@ use TeamNiftyGmbH\NuxbeKnowledge\Database\Factories\KnowledgeArticleFactory;
 
 class KnowledgeArticle extends FluxModel implements HasMedia
 {
-    use HasPackageFactory, HasUuid, InteractsWithMedia, SoftDeletes;
+    use Categorizable, HasPackageFactory, HasUuid, InteractsWithMedia, SoftDeletes;
 
     protected static function booted(): void
     {
@@ -40,11 +40,6 @@ class KnowledgeArticle extends FluxModel implements HasMedia
             'is_locked' => 'boolean',
             'is_published' => 'boolean',
         ];
-    }
-
-    public function category(): BelongsTo
-    {
-        return $this->belongsTo(KnowledgeCategory::class, 'knowledge_category_id');
     }
 
     public function roles(): BelongsToMany

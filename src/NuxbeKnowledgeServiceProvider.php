@@ -9,7 +9,6 @@ use Livewire\Livewire;
 use TeamNiftyGmbH\NuxbeKnowledge\Livewire\Knowledge;
 use TeamNiftyGmbH\NuxbeKnowledge\Models\KnowledgeArticle;
 use TeamNiftyGmbH\NuxbeKnowledge\Models\KnowledgeArticleVersion;
-use TeamNiftyGmbH\NuxbeKnowledge\Models\KnowledgeCategory;
 use TeamNiftyGmbH\NuxbeKnowledge\Support\KnowledgeManager;
 
 class NuxbeKnowledgeServiceProvider extends ServiceProvider
@@ -32,7 +31,7 @@ class NuxbeKnowledgeServiceProvider extends ServiceProvider
     protected function registerMenu(): void
     {
         Menu::register(
-            route: 'knowledge.knowledge',
+            route: 'knowledge',
             icon: 'book-open',
         );
     }
@@ -49,7 +48,6 @@ class NuxbeKnowledgeServiceProvider extends ServiceProvider
         Relation::morphMap([
             'knowledge_article' => KnowledgeArticle::class,
             'knowledge_article_version' => KnowledgeArticleVersion::class,
-            'knowledge_category' => KnowledgeCategory::class,
         ]);
     }
 

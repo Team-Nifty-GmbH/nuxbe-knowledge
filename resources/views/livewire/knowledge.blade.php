@@ -4,7 +4,6 @@
         <div class="mb-4 flex items-center justify-between">
             <h2 class="text-lg font-semibold dark:text-gray-100">{{ __('Knowledge Base') }}</h2>
             <div class="flex gap-1">
-                <x-button icon="folder-plus" color="gray" flat sm wire:click="newCategory" />
                 <x-button icon="plus" color="primary" flat sm wire:click="newArticle" />
             </div>
         </div>
@@ -108,11 +107,12 @@
                 <x-input wire:model="articleForm.title" :label="__('Title')" />
 
                 <x-select.styled
-                    wire:model="articleForm.knowledge_category_id"
-                    :label="__('Category')"
-                    select="label:name|value:id"
+                    wire:model="articleForm.categories"
+                    :label="__('Categories')"
+                    multiple
+                    select="label:label|value:id"
                     unfiltered
-                    :request="['url' => route('search', \TeamNiftyGmbH\NuxbeKnowledge\Models\KnowledgeCategory::class), 'method' => 'POST', 'params' => ['searchFields' => ['name']]]"
+                    :request="['url' => route('search', \FluxErp\Models\Category::class), 'method' => 'POST', 'params' => ['where' => [['model_type', '=', morph_alias(\TeamNiftyGmbH\NuxbeKnowledge\Models\KnowledgeArticle::class)]]]]"
                 />
 
                 <x-flux::editor wire:model="articleForm.content" :label="__('Content')" />
@@ -203,21 +203,6 @@
 
         <x-slot:footer>
             <x-button :text="__('Cancel')" color="secondary" flat x-on:click="showHistory = false" />
-        </x-slot:footer>
-    </x-modal>
-
-    {{-- Category Modal --}}
-    <x-modal :id="$categoryForm->modalName()" size="md">
-        <x-slot:title>{{ $categoryForm->id ? __('Edit Category') : __('New Category') }}</x-slot:title>
-
-        <div class="space-y-4">
-            <x-input wire:model="categoryForm.name" :label="__('Name')" />
-            <x-number wire:model="categoryForm.sort_order" :label="__('Sort Order')" />
-        </div>
-
-        <x-slot:footer>
-            <x-button :text="__('Cancel')" color="secondary" flat x-on:click="$modalClose('{{ $categoryForm->modalName() }}')" />
-            <x-button :text="__('Save')" color="primary" wire:click="saveCategory" />
         </x-slot:footer>
     </x-modal>
 </div>

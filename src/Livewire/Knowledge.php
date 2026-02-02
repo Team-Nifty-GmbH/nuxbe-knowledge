@@ -2,6 +2,7 @@
 
 namespace TeamNiftyGmbH\NuxbeKnowledge\Livewire;
 
+use FluxErp\Models\Category;
 use FluxErp\Traits\Livewire\Actions;
 use Illuminate\Validation\UnauthorizedException;
 use Illuminate\Validation\ValidationException;
@@ -11,10 +12,8 @@ use Livewire\Attributes\Url;
 use Livewire\Component;
 use TeamNiftyGmbH\NuxbeKnowledge\Actions\KnowledgeArticle\DeleteKnowledgeArticle;
 use TeamNiftyGmbH\NuxbeKnowledge\Livewire\Forms\KnowledgeArticleForm;
-use TeamNiftyGmbH\NuxbeKnowledge\Livewire\Forms\KnowledgeCategoryForm;
 use TeamNiftyGmbH\NuxbeKnowledge\Models\KnowledgeArticle;
 use TeamNiftyGmbH\NuxbeKnowledge\Models\KnowledgeArticleVersion;
-use TeamNiftyGmbH\NuxbeKnowledge\Models\KnowledgeCategory;
 use TeamNiftyGmbH\NuxbeKnowledge\Support\KnowledgeManager;
 
 class Knowledge extends Component
@@ -22,8 +21,6 @@ class Knowledge extends Component
     use Actions;
 
     public KnowledgeArticleForm $articleForm;
-
-    public KnowledgeCategoryForm $categoryForm;
 
     public array $categories = [];
 
@@ -106,26 +103,43 @@ class Knowledge extends Component
 
     public function loadCategories(): void
     {
-        $query = resolve_static(KnowledgeCategory::class, 'query')
+        $morphAlias = morph_alias(KnowledgeArticle::class);
+
+        $query = resolve_static(Category::class, 'query')
+            ->where('model_type', $morphAlias)
+            ->where('is_active', true)
             ->whereNull('parent_id')
-            ->with(['children.articles' => function ($q): void {
-                $q->where('is_published', true)->orderBy('sort_order');
-            }, 'articles' => function ($q): void {
-                $q->where('is_published', true)->orderBy('sort_order');
+            ->with(['children' => function ($q) use ($morphAlias): void {
+                $q->where('model_type', $morphAlias)->where('is_active', true);
             }])
-            ->orderBy('sort_order');
+            ->orderBy('sort_number');
 
-        if ($this->search) {
-            $query->where(function ($q): void {
-                $q->where('name', 'LIKE', "%{$this->search}%")
-                    ->orWhereHas('articles', function ($aq): void {
-                        $aq->where('title', 'LIKE', "%{$this->search}%")
-                            ->orWhere('content', 'LIKE', "%{$this->search}%");
-                    });
+        $this->categories = $query->get()->map(function ($category) {
+            $articles = resolve_static(KnowledgeArticle::class, 'query')
+                ->where('is_published', true)
+                ->whereHas('categories', function ($q) use ($category): void {
+                    $q->where('categories.id', $category->getKey());
+                })
+                ->orderBy('sort_order')
+                ->get();
+
+            $children = $category->children->map(function ($child) {
+                $childArticles = resolve_static(KnowledgeArticle::class, 'query')
+                    ->where('is_published', true)
+                    ->whereHas('categories', function ($q) use ($child): void {
+                        $q->where('categories.id', $child->getKey());
+                    })
+                    ->orderBy('sort_order')
+                    ->get();
+
+                return array_merge($child->toArray(), ['articles' => $childArticles->toArray()]);
             });
-        }
 
-        $this->categories = $query->get()->toArray();
+            return array_merge($category->toArray(), [
+                'articles' => $articles->toArray(),
+                'children' => $children->toArray(),
+            ]);
+        })->toArray();
     }
 
     public function loadPackageDocs(): void
@@ -151,17 +165,10 @@ class Knowledge extends Component
     public function newArticle(?int $categoryId = null): void
     {
         $this->articleForm->reset();
-        $this->articleForm->knowledge_category_id = $categoryId;
+        $this->articleForm->categories = $categoryId ? [$categoryId] : [];
         $this->editing = true;
         $this->selectedArticleId = null;
         $this->selectedPackageDoc = null;
-    }
-
-    public function newCategory(?int $parentId = null): void
-    {
-        $this->categoryForm->reset();
-        $this->categoryForm->parent_id = $parentId;
-        $this->js('$modalOpen(\''.$this->categoryForm->modalName().'\')');
     }
 
     public function saveArticle(): void
@@ -182,23 +189,11 @@ class Knowledge extends Component
         }
     }
 
-    public function saveCategory(): void
-    {
-        try {
-            $this->categoryForm->save();
-        } catch (ValidationException|UnauthorizedException $e) {
-            exception_to_notifications($e, $this);
-
-            return;
-        }
-
-        $this->categoryForm->reset();
-        $this->loadCategories();
-    }
-
     public function selectArticle(int $articleId): void
     {
-        $article = resolve_static(KnowledgeArticle::class, 'query')->find($articleId);
+        $article = resolve_static(KnowledgeArticle::class, 'query')
+            ->with('categories')
+            ->find($articleId);
 
         if (! $article) {
             return;
@@ -206,6 +201,7 @@ class Knowledge extends Component
 
         $this->selectedArticleId = $article->getKey();
         $this->articleForm->fill($article);
+        $this->articleForm->categories = $article->categories->pluck('id')->toArray();
         $this->editing = false;
         $this->selectedPackageDoc = null;
     }

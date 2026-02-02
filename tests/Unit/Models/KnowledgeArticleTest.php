@@ -1,8 +1,8 @@
 <?php
 
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use TeamNiftyGmbH\NuxbeKnowledge\Models\KnowledgeArticle;
 use TeamNiftyGmbH\NuxbeKnowledge\Models\KnowledgeArticleVersion;
-use TeamNiftyGmbH\NuxbeKnowledge\Models\KnowledgeCategory;
 
 test('factory creates valid article', function (): void {
     $article = KnowledgeArticle::factory()->create();
@@ -12,10 +12,10 @@ test('factory creates valid article', function (): void {
         ->and($article->uuid)->toBeString();
 });
 
-test('article belongs to category', function (): void {
+test('article has categories relationship', function (): void {
     $article = KnowledgeArticle::factory()->create();
 
-    expect($article->category)->toBeInstanceOf(KnowledgeCategory::class);
+    expect($article->categories())->toBeInstanceOf(MorphToMany::class);
 });
 
 test('article has versions relationship', function (): void {
