@@ -20,6 +20,7 @@ class NuxbeKnowledgeServiceProvider extends ServiceProvider
         $this->registerMigrations();
         $this->registerMenu();
         $this->registerLivewireComponents();
+        $this->registerDocs();
     }
 
     public function register(): void
@@ -59,6 +60,15 @@ class NuxbeKnowledgeServiceProvider extends ServiceProvider
     protected function registerLivewireComponents(): void
     {
         Livewire::component('nuxbe-knowledge.knowledge', Knowledge::class);
+    }
+
+    protected function registerDocs(): void
+    {
+        app(KnowledgeManager::class)->registerDocs(
+            package: 'nuxbe-knowledge',
+            path: __DIR__.'/../docs/guide',
+            label: 'Nuxbe Knowledge',
+        );
     }
 
     protected function registerTranslationsAndViews(): void
