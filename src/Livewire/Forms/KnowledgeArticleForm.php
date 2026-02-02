@@ -6,8 +6,6 @@ use FluxErp\Livewire\Forms\FluxForm;
 use Livewire\Attributes\Locked;
 use TeamNiftyGmbH\NuxbeKnowledge\Actions\KnowledgeArticle\CreateKnowledgeArticle;
 use TeamNiftyGmbH\NuxbeKnowledge\Actions\KnowledgeArticle\UpdateKnowledgeArticle;
-use TeamNiftyGmbH\NuxbeKnowledge\Models\KnowledgeArticle;
-
 class KnowledgeArticleForm extends FluxForm
 {
     public ?string $change_summary = null;
@@ -21,7 +19,7 @@ class KnowledgeArticleForm extends FluxForm
 
     public bool $is_published = true;
 
-    public ?int $sort_order = null;
+    public int $sort_order = 0;
 
     public ?string $title = null;
 
@@ -38,18 +36,4 @@ class KnowledgeArticleForm extends FluxForm
         return 'edit-knowledge-article-modal';
     }
 
-    protected function getCreateAction(): string
-    {
-        return CreateKnowledgeArticle::class;
-    }
-
-    protected function getModelClass(): string
-    {
-        return KnowledgeArticle::class;
-    }
-
-    protected function getUpdateAction(): string
-    {
-        return UpdateKnowledgeArticle::class;
-    }
 }

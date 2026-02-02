@@ -44,6 +44,11 @@ class CreateKnowledgeArticleRuleset extends FluxRuleset
                 'integer',
                 app(ModelExists::class, ['model' => Category::class]),
             ],
+            'change_summary' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
         ];
     }
 }

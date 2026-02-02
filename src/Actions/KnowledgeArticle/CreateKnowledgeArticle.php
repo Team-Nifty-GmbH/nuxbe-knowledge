@@ -22,20 +22,15 @@ class CreateKnowledgeArticle extends FluxAction
 
     public function performAction(): KnowledgeArticle
     {
-        $categories = $this->getData('categories') ?? [];
-        $data = collect($this->data)->except('categories')->toArray();
+        $changeSummary = $this->getData('change_summary');
 
-        if (! empty($data['content'])) {
+        if (! empty($this->data['content'])) {
             $converter = new HtmlConverter;
-            $data['content_markdown'] = $converter->convert($data['content']);
+            $this->data['content_markdown'] = $converter->convert($this->data['content']);
         }
 
-        $article = app(KnowledgeArticle::class, ['attributes' => $data]);
+        $article = app(KnowledgeArticle::class, ['attributes' => $this->data]);
         $article->save();
-
-        if ($categories) {
-            $article->categories()->sync($categories);
-        }
 
         app(KnowledgeArticleVersion::class, ['attributes' => [
             'knowledge_article_id' => $article->getKey(),
@@ -43,6 +38,7 @@ class CreateKnowledgeArticle extends FluxAction
             'content' => $article->content ?? '',
             'content_markdown' => $article->content_markdown,
             'version_number' => 1,
+            'change_summary' => $changeSummary,
             'created_by' => auth()->id(),
         ]])->save();
 

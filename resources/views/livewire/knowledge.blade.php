@@ -56,6 +56,20 @@
             @endforeach
         </div>
 
+        {{-- Uncategorized Articles --}}
+        @if (count($uncategorizedArticles))
+            <div class="mt-2 space-y-0.5">
+                @foreach ($uncategorizedArticles as $article)
+                    <div
+                        class="cursor-pointer rounded px-2 py-1 text-sm hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 {{ $selectedArticleId === $article['id'] ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-400' : '' }}"
+                        wire:click="selectArticle({{ $article['id'] }})"
+                    >
+                        {{ $article['title'] }}
+                    </div>
+                @endforeach
+            </div>
+        @endif
+
         {{-- Package Docs --}}
         @foreach ($packageDocs as $package => $config)
             <div class="mt-4 border-t pt-4 dark:border-gray-700" x-data="{ open: false }">

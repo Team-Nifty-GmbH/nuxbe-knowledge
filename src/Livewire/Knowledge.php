@@ -32,6 +32,8 @@ class Knowledge extends Component
 
     public string $search = '';
 
+    public array $uncategorizedArticles = [];
+
     #[Url]
     public ?int $selectedArticleId = null;
 
@@ -140,6 +142,13 @@ class Knowledge extends Component
                 'children' => $children->toArray(),
             ]);
         })->toArray();
+
+        $this->uncategorizedArticles = resolve_static(KnowledgeArticle::class, 'query')
+            ->where('is_published', true)
+            ->whereDoesntHave('categories')
+            ->orderBy('sort_order')
+            ->get()
+            ->toArray();
     }
 
     public function loadPackageDocs(): void
