@@ -5,6 +5,7 @@ namespace TeamNiftyGmbH\NuxbeKnowledge\Support;
 use FluxErp\Models\Language;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Str;
 use League\CommonMark\GithubFlavoredMarkdownConverter;
 
 class KnowledgeManager
@@ -92,14 +93,15 @@ class KnowledgeManager
             // Rewrite relative image src to asset route
             $html = preg_replace_callback(
                 '/(<img[^>]+src=["\'])([^"\']+)(["\'])/',
-                function (array $matches) use ($package, $fullPath, $docsBaseDir): string {
+                function (array $matches) use ($package, $fullPath, $languagePath, $docsBaseDir): string {
                     $src = $matches[2];
 
                     if (str_starts_with($src, 'http://') || str_starts_with($src, 'https://')) {
                         return $matches[0];
                     }
 
-                    $absoluteImgPath = realpath(dirname($fullPath).'/'.$src);
+                    $absoluteImgPath = realpath(dirname($fullPath).'/'.$src)
+                        ?: realpath($languagePath.'/'.$src);
 
                     if (! $absoluteImgPath) {
                         return $matches[0];
@@ -122,7 +124,8 @@ class KnowledgeManager
                         return $matches[0];
                     }
 
-                    $absoluteLinkPath = realpath(dirname($fullPath).'/'.$href);
+                    $absoluteLinkPath = realpath(dirname($fullPath).'/'.$href)
+                        ?: realpath($languagePath.'/'.$href);
 
                     if (! $absoluteLinkPath || ! str_starts_with($absoluteLinkPath, $languagePath)) {
                         return $matches[0];
@@ -251,6 +254,8 @@ class KnowledgeManager
 
     protected function formatName(string $name): string
     {
-        return str_replace(['-', '_'], ' ', ucfirst($name));
+        $name = preg_replace('/^\d+-/', '', $name);
+
+        return Str::headline(str_replace(['-', '_'], ' ', $name));
     }
 }
