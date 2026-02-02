@@ -25,5 +25,21 @@
     "Select an article": "Artikel auswählen",
     "Package Documentation": "Paket-Dokumentation",
     "Sort Order": "Reihenfolge",
-    "Name": "Name"
+    "Name": "Name",
+    "Attachments": "Anhänge",
+    "File": "Datei",
+    "Edit": "Bearbeiten",
+    "Delete": "Löschen",
+    "Article": "Artikel",
+    "What changed?": "Was wurde geändert?",
+    "Insert Image": "Bild einfügen",
+    "Images inserted inline within the article content.": "Bilder werden direkt im Artikelinhalt angezeigt.",
+    "File Attachments": "Dateianhänge",
+    "PDFs, documents and other files available as downloads.": "PDFs, Dokumente und andere Dateien als Download.",
+    "Knowledge Article": "Wissensartikel",
+    "Knowledge Article Version": "Wissensartikel-Version",
+    "Version Comparison": "Versionsvergleich",
+    "Restore": "Wiederherstellen",
+    "Restored from version :version": "Wiederhergestellt aus Version :version",
+    "Close": "Schließen"
 }

@@ -4,6 +4,7 @@ namespace TeamNiftyGmbH\NuxbeKnowledge\Models;
 
 use FluxErp\Models\FluxModel;
 use FluxErp\Traits\Model\Categorizable;
+use FluxErp\Traits\Model\HasAttributeTranslations;
 use FluxErp\Traits\Model\HasPackageFactory;
 use FluxErp\Traits\Model\HasUuid;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -13,12 +14,18 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\File;
 use Spatie\Permission\Models\Role;
 use TeamNiftyGmbH\NuxbeKnowledge\Database\Factories\KnowledgeArticleFactory;
 
 class KnowledgeArticle extends FluxModel implements HasMedia
 {
-    use Categorizable, HasPackageFactory, HasUuid, InteractsWithMedia, SoftDeletes;
+    use Categorizable, HasAttributeTranslations, HasPackageFactory, HasUuid, InteractsWithMedia, SoftDeletes;
+
+    protected function translatableAttributes(): array
+    {
+        return ['title', 'content', 'content_markdown'];
+    }
 
     protected static function booted(): void
     {
@@ -40,6 +47,15 @@ class KnowledgeArticle extends FluxModel implements HasMedia
             'is_locked' => 'boolean',
             'is_published' => 'boolean',
         ];
+    }
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('editor-images')
+            ->acceptsFile(function (File $file): bool {
+                return str_starts_with($file->mimeType, 'image/');
+            })
+            ->useDisk('public');
     }
 
     public function roles(): BelongsToMany

@@ -2,7 +2,9 @@
 
 namespace TeamNiftyGmbH\NuxbeKnowledge;
 
+use FluxErp\Facades\Editor;
 use FluxErp\Facades\Menu;
+use FluxErp\View\Components\EditorButtons\ImageUpload;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
@@ -21,6 +23,7 @@ class NuxbeKnowledgeServiceProvider extends ServiceProvider
         $this->registerMenu();
         $this->registerLivewireComponents();
         $this->registerDocs();
+        $this->registerEditorButtons();
     }
 
     public function register(): void
@@ -34,6 +37,7 @@ class NuxbeKnowledgeServiceProvider extends ServiceProvider
         Menu::register(
             route: 'knowledge',
             icon: 'book-open',
+            label: 'Knowledge Base',
         );
     }
 
@@ -64,11 +68,20 @@ class NuxbeKnowledgeServiceProvider extends ServiceProvider
 
     protected function registerDocs(): void
     {
-        app(KnowledgeManager::class)->registerDocs(
-            package: 'nuxbe-knowledge',
-            path: __DIR__.'/../docs/guide',
-            label: 'Nuxbe Knowledge',
-        );
+        app(KnowledgeManager::class)
+            ->registerDocs(
+                package: 'nuxbe-knowledge',
+                path: [
+                    'de' => __DIR__.'/../docs/guide/de',
+                    'en' => __DIR__.'/../docs/guide/en',
+                ],
+                label: 'Nuxbe Knowledge',
+            );
+    }
+
+    protected function registerEditorButtons(): void
+    {
+        Editor::registerButton(ImageUpload::class);
     }
 
     protected function registerTranslationsAndViews(): void

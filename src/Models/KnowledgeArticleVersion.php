@@ -3,6 +3,7 @@
 namespace TeamNiftyGmbH\NuxbeKnowledge\Models;
 
 use FluxErp\Models\FluxModel;
+use FluxErp\Traits\Model\HasAttributeTranslations;
 use FluxErp\Traits\Model\HasPackageFactory;
 use FluxErp\Traits\Model\HasUuid;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -11,7 +12,12 @@ use TeamNiftyGmbH\NuxbeKnowledge\Database\Factories\KnowledgeArticleVersionFacto
 
 class KnowledgeArticleVersion extends FluxModel
 {
-    use HasPackageFactory, HasUuid;
+    use HasAttributeTranslations, HasPackageFactory, HasUuid;
+
+    protected function translatableAttributes(): array
+    {
+        return ['title', 'content', 'content_markdown', 'change_summary'];
+    }
 
     protected static function newFactory(): Factory
     {
