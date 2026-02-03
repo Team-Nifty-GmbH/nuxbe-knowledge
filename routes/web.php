@@ -21,7 +21,7 @@ Route::middleware(['web', 'auth:web', 'permission'])->group(function (): void {
         }
 
         $docsBaseDir = realpath($manager->resolveDocsBaseDir($package));
-        $fullPath = realpath($docsBaseDir . '/' . $path);
+        $fullPath = realpath($docsBaseDir.'/'.$path);
 
         if (! $fullPath || ! str_starts_with($fullPath, $docsBaseDir)) {
             abort(404);

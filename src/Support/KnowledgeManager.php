@@ -78,7 +78,7 @@ class KnowledgeManager
         $languageCode = $this->resolveLanguageCode();
         $cacheKey = "knowledge.docs.rendered.{$package}.{$languageCode}.".md5($relativePath).'.'.filemtime($fullPath);
 
-        return Cache::remember($cacheKey, 3600, function () use ($fullPath, $package, $relativePath): string {
+        return Cache::remember($cacheKey, 3600, function () use ($fullPath, $package): string {
             $markdown = file_get_contents($fullPath);
             $converter = new GithubFlavoredMarkdownConverter([
                 'html_input' => 'strip',

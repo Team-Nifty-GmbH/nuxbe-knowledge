@@ -6,6 +6,7 @@ use FluxErp\Livewire\Forms\FluxForm;
 use Livewire\Attributes\Locked;
 use TeamNiftyGmbH\NuxbeKnowledge\Actions\KnowledgeArticle\CreateKnowledgeArticle;
 use TeamNiftyGmbH\NuxbeKnowledge\Actions\KnowledgeArticle\UpdateKnowledgeArticle;
+
 class KnowledgeArticleForm extends FluxForm
 {
     public ?string $change_summary = null;
@@ -35,5 +36,4 @@ class KnowledgeArticleForm extends FluxForm
     {
         return 'edit-knowledge-article-modal';
     }
-
 }

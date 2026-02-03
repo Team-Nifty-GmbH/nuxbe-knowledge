@@ -127,7 +127,7 @@ class Knowledge extends Component
 
             $newPath = collect($this->packageDocs[$package]['tree'] ?? [])
                 ->first(fn (array $item): bool => ($item['type'] ?? '') === 'file'
-                    && str_starts_with(pathinfo($item['relative_path'], PATHINFO_FILENAME), $prefix . '-')
+                    && str_starts_with(pathinfo($item['relative_path'], PATHINFO_FILENAME), $prefix.'-')
                 );
 
             if ($newPath) {
