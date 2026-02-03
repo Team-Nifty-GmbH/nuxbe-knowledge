@@ -73,6 +73,6 @@ test('can delete knowledge article', function (): void {
     ])->validate()->execute();
 
     expect($result)->toBeTrue()
-        ->and(KnowledgeArticle::find($article->getKey()))->toBeNull()
-        ->and(KnowledgeArticle::withTrashed()->find($article->getKey()))->not->toBeNull();
+        ->and(KnowledgeArticle::query()->whereKey($article->getKey())->first())->toBeNull()
+        ->and(KnowledgeArticle::withTrashed()->whereKey($article->getKey())->first())->not->toBeNull();
 });

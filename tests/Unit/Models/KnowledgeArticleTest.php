@@ -31,5 +31,5 @@ test('article uses soft deletes', function (): void {
     $article->delete();
 
     expect($article->trashed())->toBeTrue()
-        ->and(KnowledgeArticle::withTrashed()->find($article->getKey()))->not->toBeNull();
+        ->and(KnowledgeArticle::withTrashed()->whereKey($article->getKey())->first())->not->toBeNull();
 });

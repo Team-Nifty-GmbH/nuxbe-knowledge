@@ -3,10 +3,12 @@
 namespace TeamNiftyGmbH\NuxbeKnowledge\Support;
 
 use FluxErp\Models\Language;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
 use League\CommonMark\GithubFlavoredMarkdownConverter;
+use TeamNiftyGmbH\NuxbeKnowledge\Models\KnowledgePackageSetting;
 
 class KnowledgeManager
 {
@@ -17,6 +19,7 @@ class KnowledgeManager
         string|array $path,
         string $label,
         string $icon = 'book-open',
+        ?array $roles = null,
     ): void {
         if (is_string($path)) {
             $paths = ['_default' => rtrim($path, '/')];
@@ -28,6 +31,7 @@ class KnowledgeManager
             'paths' => $paths,
             'label' => $label,
             'icon' => $icon,
+            'roles' => $roles,
         ];
     }
 
@@ -156,6 +160,109 @@ class KnowledgeManager
         return $trees;
     }
 
+    public function getAllVisibleDocsTrees(?Authenticatable $user): array
+    {
+        $trees = [];
+
+        foreach ($this->packages as $package => $config) {
+            if (! $this->isPackageVisibleToUser($package, $user)) {
+                continue;
+            }
+
+            $trees[$package] = [
+                'label' => $config['label'],
+                'icon' => $config['icon'],
+                'tree' => $this->getDocsTree($package),
+            ];
+        }
+
+        return $trees;
+    }
+
+    public function isPackageVisibleToUser(string $package, ?Authenticatable $user): bool
+    {
+        if (! isset($this->packages[$package])) {
+            return false;
+        }
+
+        if (! $user) {
+            // Check DB settings first
+            $dbSetting = $this->getPackageSetting($package);
+
+            if ($dbSetting) {
+                return $dbSetting->visibility_mode === 'public';
+            }
+
+            // Fallback to code-level roles
+            $roles = $this->packages[$package]['roles'] ?? null;
+
+            return $roles === null;
+        }
+
+        if (method_exists($user, 'hasRole') && $user->hasRole('Super Admin')) {
+            return true;
+        }
+
+        // Check DB settings first
+        $dbSetting = $this->getPackageSetting($package);
+
+        if ($dbSetting) {
+            if ($dbSetting->visibility_mode === 'public') {
+                return true;
+            }
+
+            $userId = $user->getAuthIdentifier();
+            $userRoleIds = [];
+            if (method_exists($user, 'roles')) {
+                $userRoleIds = $user->roles->pluck('id')->toArray();
+            }
+
+            $hasUserAccess = $dbSetting->users()->where('users.id', $userId)->exists();
+            $hasRoleAccess = ! empty($userRoleIds) && $dbSetting->roles()->whereIn('roles.id', $userRoleIds)->exists();
+
+            if ($dbSetting->visibility_mode === 'whitelist') {
+                return $hasUserAccess || $hasRoleAccess;
+            }
+
+            // blacklist
+            return ! $hasUserAccess && ! $hasRoleAccess;
+        }
+
+        // Fallback to code-level roles
+        $roles = $this->packages[$package]['roles'] ?? null;
+
+        if ($roles === null) {
+            return true;
+        }
+
+        if (method_exists($user, 'hasAnyRole')) {
+            return $user->hasAnyRole($roles);
+        }
+
+        return false;
+    }
+
+    public function getPackageSetting(string $package): ?KnowledgePackageSetting
+    {
+        return resolve_static(KnowledgePackageSetting::class, 'query')
+            ->where('package', $package)
+            ->first();
+    }
+
+    public function savePackageSetting(string $package, string $visibilityMode, array $roles = [], array $users = []): KnowledgePackageSetting
+    {
+        $setting = resolve_static(KnowledgePackageSetting::class, 'query')
+            ->firstOrNew(['package' => $package]);
+
+        $setting->visibility_mode = $visibilityMode;
+        $setting->save();
+
+        $setting->roles()->sync($roles);
+        $setting->users()->sync($users);
+
+        return $setting;
+    }
+
     public function resolveDocsBaseDir(string $package): ?string
     {
         if (! isset($this->packages[$package])) {
@@ -205,7 +312,7 @@ class KnowledgeManager
         $languageId = Session::get('selectedLanguageId');
 
         if ($languageId) {
-            $language = Language::query()->find($languageId);
+            $language = Language::query()->whereKey($languageId)->first();
 
             if ($language) {
                 return $language->language_code;

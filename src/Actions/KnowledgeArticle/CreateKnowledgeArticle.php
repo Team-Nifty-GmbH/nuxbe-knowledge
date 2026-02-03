@@ -24,6 +24,9 @@ class CreateKnowledgeArticle extends FluxAction
     public function performAction(): KnowledgeArticle
     {
         $changeSummary = Arr::pull($this->data, 'change_summary');
+        $roles = Arr::pull($this->data, 'roles');
+        $users = Arr::pull($this->data, 'users');
+        $visibilityMode = Arr::pull($this->data, 'visibility_mode');
 
         if (! empty($this->data['content'])) {
             $converter = new HtmlConverter;
@@ -31,7 +34,28 @@ class CreateKnowledgeArticle extends FluxAction
         }
 
         $article = app(KnowledgeArticle::class, ['attributes' => $this->data]);
+
+        if (! is_null($visibilityMode)) {
+            $article->visibility_mode = $visibilityMode;
+        }
+
         $article->save();
+
+        if (is_array($roles)) {
+            $syncData = [];
+            foreach ($roles as $role) {
+                $syncData[$role['role_id']] = ['permission_level' => $role['permission_level']];
+            }
+            $article->roles()->sync($syncData);
+        }
+
+        if (is_array($users)) {
+            $syncData = [];
+            foreach ($users as $user) {
+                $syncData[$user['user_id']] = ['permission_level' => $user['permission_level']];
+            }
+            $article->users()->sync($syncData);
+        }
 
         app(KnowledgeArticleVersion::class, ['attributes' => [
             'knowledge_article_id' => $article->getKey(),
