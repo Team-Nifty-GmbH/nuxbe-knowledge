@@ -116,9 +116,10 @@ class KnowledgeManager
 
             // Rewrite relative .md links to data attributes for Alpine handling
             return preg_replace_callback(
-                '/<a\s([^>]*)href=["\']([^"\']+\.md)["\']([^>]*)>/',
+                '/<a\s([^>]*)href=["\']([^"\']+\.md)(#[^"\']*)?["\']([^>]*)>/',
                 function (array $matches) use ($fullPath, $languagePath): string {
                     $href = $matches[2];
+                    $fragment = $matches[3] ?? '';
 
                     if (str_starts_with($href, 'http://') || str_starts_with($href, 'https://')) {
                         return $matches[0];
@@ -133,7 +134,7 @@ class KnowledgeManager
 
                     $resolvedPath = ltrim(str_replace($languagePath, '', $absoluteLinkPath), '/');
 
-                    return '<a '.$matches[1].'href="#" data-doc-link="'.e($resolvedPath).'"'.$matches[3].'>';
+                    return '<a '.$matches[1].'href="'.$fragment.'" data-doc-link="'.e($resolvedPath).'"'.$matches[4].'>';
                 },
                 $html
             );
