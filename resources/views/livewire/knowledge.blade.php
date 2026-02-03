@@ -1,10 +1,10 @@
-<div class="flex h-full gap-6" x-data="{ versionA: null, versionB: null }">
+<div class="flex h-full gap-6" x-data="{ versionA: null, versionB: null, sidebarOpen: true }">
     {{-- Sidebar --}}
-    <div class="w-72 shrink-0 overflow-y-auto rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+    <div x-bind:class="!sidebarOpen && 'hidden lg:block'" class="w-full shrink-0 overflow-y-auto rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800 lg:w-72">
         <div class="mb-4 flex items-center justify-between">
             <h2 class="text-lg font-semibold dark:text-gray-100">{{ __('Knowledge Base') }}</h2>
             <div class="flex gap-1">
-                <x-button icon="plus" color="primary" flat sm wire:click="newArticle" />
+                <x-button icon="plus" color="primary" flat sm wire:click="newArticle" x-on:click="sidebarOpen = false" />
             </div>
         </div>
 
@@ -19,13 +19,13 @@
                     <div class="flex cursor-pointer items-center gap-1 rounded px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-700" x-on:click="open = !open">
                         <x-icon name="chevron-right" class="h-4 w-4 transition-transform" x-bind:class="open && 'rotate-90'" />
                         <span class="flex-1 text-sm font-medium dark:text-gray-200">{{ $category['name'] }}</span>
-                        <x-button icon="plus" color="gray" flat xs wire:click.stop="newArticle({{ $category['id'] }})" />
+                        <x-button icon="plus" color="gray" flat xs wire:click.stop="newArticle({{ $category['id'] }})" x-on:click="sidebarOpen = false" />
                     </div>
                     <div x-show="open" x-cloak class="ml-5 space-y-0.5">
                         @foreach ($category['articles'] ?? [] as $article)
                             <div
                                 class="cursor-pointer rounded px-2 py-1 text-sm hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 {{ $selectedArticleId === $article['id'] ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-400' : '' }}"
-                                wire:click="selectArticle({{ $article['id'] }})"
+                                wire:click="selectArticle({{ $article['id'] }})" x-on:click="sidebarOpen = false"
                             >
                                 {{ $article['title'] }}
                             </div>
@@ -37,13 +37,13 @@
                                 <div class="flex cursor-pointer items-center gap-1 rounded px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-700" x-on:click="childOpen = !childOpen">
                                     <x-icon name="chevron-right" class="h-3 w-3 transition-transform" x-bind:class="childOpen && 'rotate-90'" />
                                     <span class="flex-1 text-sm dark:text-gray-300">{{ $child['name'] }}</span>
-                                    <x-button icon="plus" color="gray" flat xs wire:click.stop="newArticle({{ $child['id'] }})" />
+                                    <x-button icon="plus" color="gray" flat xs wire:click.stop="newArticle({{ $child['id'] }})" x-on:click="sidebarOpen = false" />
                                 </div>
                                 <div x-show="childOpen" x-cloak class="ml-4 space-y-0.5">
                                     @foreach ($child['articles'] ?? [] as $childArticle)
                                         <div
                                             class="cursor-pointer rounded px-2 py-1 text-sm hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 {{ $selectedArticleId === $childArticle['id'] ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-400' : '' }}"
-                                            wire:click="selectArticle({{ $childArticle['id'] }})"
+                                            wire:click="selectArticle({{ $childArticle['id'] }})" x-on:click="sidebarOpen = false"
                                         >
                                             {{ $childArticle['title'] }}
                                         </div>
@@ -83,7 +83,7 @@
                         @if (($item['type'] ?? '') === 'file')
                             <div
                                 class="cursor-pointer rounded px-2 py-1 text-sm hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 {{ $selectedPackageDoc && $selectedPackageDoc['package'] === $package && $selectedPackageDoc['path'] === $item['relative_path'] ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-400' : '' }}"
-                                wire:click="selectPackageDoc('{{ $package }}', '{{ $item['relative_path'] }}')"
+                                wire:click="selectPackageDoc('{{ $package }}', '{{ $item['relative_path'] }}')" x-on:click="sidebarOpen = false"
                             >
                                 {{ $item['name'] }}
                             </div>
@@ -98,7 +98,7 @@
                                         @if (($child['type'] ?? '') === 'file')
                                             <div
                                                 class="cursor-pointer rounded px-2 py-1 text-sm hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 {{ $selectedPackageDoc && $selectedPackageDoc['package'] === $package && $selectedPackageDoc['path'] === $child['relative_path'] ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-400' : '' }}"
-                                                wire:click="selectPackageDoc('{{ $package }}', '{{ $child['relative_path'] }}')"
+                                                wire:click="selectPackageDoc('{{ $package }}', '{{ $child['relative_path'] }}')" x-on:click="sidebarOpen = false"
                                             >
                                                 {{ $child['name'] }}
                                             </div>
@@ -114,12 +114,13 @@
     </div>
 
     {{-- Content Area --}}
-    <div class="flex-1 overflow-y-auto rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+    <div x-bind:class="sidebarOpen && 'hidden lg:block'" class="w-full flex-1 overflow-y-auto rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800 lg:w-auto">
         @if ($editing)
             {{-- Edit Mode --}}
             <div class="space-y-4">
                 @if ($articleForm->id)
-                    <div class="flex justify-end">
+                    <div class="flex items-center justify-between">
+                        <x-button icon="arrow-left" color="gray" flat sm class="lg:hidden" x-on:click="sidebarOpen = true" />
                         <div class="w-48">
                             <x-select.styled
                                 wire:model="languageId"
@@ -130,6 +131,8 @@
                             />
                         </div>
                     </div>
+                @else
+                    <x-button icon="arrow-left" color="gray" flat sm class="lg:hidden" x-on:click="sidebarOpen = true" />
                 @endif
 
                 <x-input wire:model="articleForm.title" :label="__('Title')" />
@@ -168,8 +171,11 @@
         @elseif ($selectedArticleId)
             {{-- View Mode --}}
             <div>
-                <div class="mb-4 flex items-center justify-between">
-                    <h1 class="text-2xl font-bold dark:text-gray-100">{{ $articleForm->title }}</h1>
+                <div class="mb-4 flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-2">
+                        <x-button icon="arrow-left" color="gray" flat sm class="lg:hidden" x-on:click="sidebarOpen = true" />
+                        <h1 class="text-2xl font-bold dark:text-gray-100">{{ $articleForm->title }}</h1>
+                    </div>
                     <div class="flex items-center gap-2">
                         <div class="w-48">
                             <x-select.styled
@@ -213,6 +219,7 @@
             <div x-data="{ lightboxSrc: null }">
                 <div class="mb-4 flex items-center justify-between">
                     <div class="flex items-center gap-2">
+                        <x-button icon="arrow-left" color="gray" flat sm class="lg:hidden" x-on:click="sidebarOpen = true" />
                         <x-badge color="gray" :text="$selectedPackageDoc['label']" />
                         <x-icon name="lock-closed" class="h-4 w-4 text-gray-400" />
                     </div>
@@ -277,10 +284,13 @@
             </div>
         @else
             {{-- Empty State --}}
-            <div class="flex h-full items-center justify-center text-gray-400 dark:text-gray-500">
-                <div class="text-center">
-                    <x-icon name="book-open" class="mx-auto h-12 w-12" />
-                    <p class="mt-2">{{ __('Select an article') }}</p>
+            <div class="flex h-full flex-col text-gray-400 dark:text-gray-500">
+                <x-button icon="arrow-left" color="gray" flat sm class="self-start lg:hidden" x-on:click="sidebarOpen = true" />
+                <div class="flex flex-1 items-center justify-center">
+                    <div class="text-center">
+                        <x-icon name="book-open" class="mx-auto h-12 w-12" />
+                        <p class="mt-2">{{ __('Select an article') }}</p>
+                    </div>
                 </div>
             </div>
         @endif
