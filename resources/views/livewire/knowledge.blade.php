@@ -217,16 +217,25 @@
                 @if ($attachments->stagedFiles)
                     <div class="mt-6 border-t pt-4 dark:border-gray-700">
                         <h3 class="mb-2 text-sm font-medium text-gray-500 dark:text-gray-400">{{ __('Attachments') }}</h3>
-                        <div class="flex flex-wrap gap-2">
+                        <div class="space-y-3">
                             @foreach ($attachments->stagedFiles as $file)
-                                <a
-                                    href="{{ $file['url'] ?? $file['preview_url'] ?? '#' }}"
-                                    target="_blank"
-                                    class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700"
-                                >
-                                    <x-icon name="paper-clip" class="h-4 w-4 text-gray-400" />
-                                    {{ $file['name'] ?? $file['file_name'] ?? __('File') }}
-                                </a>
+                                @if (str_starts_with($file['mime_type'] ?? '', 'video/'))
+                                    <div>
+                                        <video controls class="max-h-96 rounded-lg">
+                                            <source src="{{ $file['url'] ?? $file['preview_url'] }}" type="{{ $file['mime_type'] }}">
+                                        </video>
+                                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ $file['name'] ?? $file['file_name'] ?? __('Video') }}</p>
+                                    </div>
+                                @else
+                                    <a
+                                        href="{{ $file['url'] ?? $file['preview_url'] ?? '#' }}"
+                                        target="_blank"
+                                        class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700"
+                                    >
+                                        <x-icon name="paper-clip" class="h-4 w-4 text-gray-400" />
+                                        {{ $file['name'] ?? $file['file_name'] ?? __('File') }}
+                                    </a>
+                                @endif
                             @endforeach
                         </div>
                     </div>

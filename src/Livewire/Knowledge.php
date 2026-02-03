@@ -303,8 +303,6 @@ class Knowledge extends Component
             $this->attachments->save();
         } catch (ValidationException|UnauthorizedException $e) {
             exception_to_notifications($e, $this);
-
-            return;
         }
 
         $this->editing = false;

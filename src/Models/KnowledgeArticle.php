@@ -6,21 +6,22 @@ use FluxErp\Models\FluxModel;
 use FluxErp\Traits\Model\Categorizable;
 use FluxErp\Traits\Model\HasAttributeTranslations;
 use FluxErp\Traits\Model\HasPackageFactory;
+use FluxErp\Traits\Model\HasUserModification;
 use FluxErp\Traits\Model\HasUuid;
+use FluxErp\Traits\Model\InteractsWithMedia;
+use FluxErp\Traits\Model\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 use Spatie\MediaLibrary\HasMedia;
-use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\File;
 use Spatie\Permission\Models\Role;
 use TeamNiftyGmbH\NuxbeKnowledge\Database\Factories\KnowledgeArticleFactory;
 
 class KnowledgeArticle extends FluxModel implements HasMedia
 {
-    use Categorizable, HasAttributeTranslations, HasPackageFactory, HasUuid, InteractsWithMedia, SoftDeletes;
+    use Categorizable, HasAttributeTranslations, HasPackageFactory, HasUserModification, HasUuid, InteractsWithMedia, SoftDeletes;
 
     protected function translatableAttributes(): array
     {
@@ -55,6 +56,9 @@ class KnowledgeArticle extends FluxModel implements HasMedia
             ->acceptsFile(function (File $file): bool {
                 return str_starts_with($file->mimeType, 'image/');
             })
+            ->useDisk('public');
+
+        $this->addMediaCollection('attachments')
             ->useDisk('public');
     }
 
