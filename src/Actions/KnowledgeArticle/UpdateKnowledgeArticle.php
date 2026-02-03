@@ -28,6 +28,9 @@ class UpdateKnowledgeArticle extends FluxAction
             ->first();
 
         $changeSummary = Arr::pull($this->data, 'change_summary');
+        $roles = Arr::pull($this->data, 'roles');
+        $users = Arr::pull($this->data, 'users');
+        $visibilityMode = Arr::pull($this->data, 'visibility_mode');
 
         if (! empty($this->data['content'])) {
             $converter = new HtmlConverter;
@@ -35,7 +38,28 @@ class UpdateKnowledgeArticle extends FluxAction
         }
 
         $article->fill($this->data);
+
+        if (! is_null($visibilityMode)) {
+            $article->visibility_mode = $visibilityMode;
+        }
+
         $article->save();
+
+        if (is_array($roles)) {
+            $syncData = [];
+            foreach ($roles as $role) {
+                $syncData[$role['role_id']] = ['permission_level' => $role['permission_level']];
+            }
+            $article->roles()->sync($syncData);
+        }
+
+        if (is_array($users)) {
+            $syncData = [];
+            foreach ($users as $user) {
+                $syncData[$user['user_id']] = ['permission_level' => $user['permission_level']];
+            }
+            $article->users()->sync($syncData);
+        }
 
         $lastVersion = resolve_static(KnowledgeArticleVersion::class, 'query')
             ->where('knowledge_article_id', $article->getKey())

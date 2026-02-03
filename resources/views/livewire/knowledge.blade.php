@@ -91,6 +91,9 @@
                     <x-icon name="chevron-right" class="h-4 w-4 transition-transform" x-bind:class="open && 'rotate-90'" />
                     <x-icon name="lock-closed" class="h-3 w-3 text-gray-400" />
                     <span class="flex-1 text-sm font-medium dark:text-gray-200">{{ $config['label'] }}</span>
+                    @if (auth()->user()?->hasRole('Super Admin'))
+                        <x-button icon="cog-6-tooth" color="gray" flat xs wire:click.stop="openPackageSettings('{{ $package }}')" x-on:click.stop="$modalOpen('package-settings-modal')" />
+                    @endif
                 </div>
                 <div x-show="open" x-cloak class="ml-5 space-y-0.5">
                     @foreach ($config['tree'] as $item)
@@ -164,7 +167,7 @@
                     :request="['url' => route('search', \FluxErp\Models\Category::class), 'method' => 'POST', 'params' => ['where' => [['model_type', '=', morph_alias(\TeamNiftyGmbH\NuxbeKnowledge\Models\KnowledgeArticle::class)]]]]"
                 />
 
-                <x-flux::editor wire:model="articleForm.content" :label="__('Content')" />
+                <x-flux::editor wire:model="articleForm.content" :label="__('Content')" class="min-h-[500px]" />
 
                 <div>
                     <x-flux::features.media.upload-form-object
@@ -176,6 +179,95 @@
                 </div>
 
                 <x-toggle wire:model="articleForm.is_published" :label="__('Published')" />
+
+                {{-- Visibility Mode --}}
+                <div class="space-y-3 rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+                    <h3 class="text-sm font-medium dark:text-gray-200">{{ __('Visibility') }}</h3>
+                    <x-select.styled
+                        wire:model.live="articleForm.visibility_mode"
+                        :label="__('Visibility Mode')"
+                        :options="[
+                            ['label' => __('Public'), 'value' => 'public'],
+                            ['label' => __('Whitelist'), 'value' => 'whitelist'],
+                            ['label' => __('Blacklist'), 'value' => 'blacklist'],
+                        ]"
+                        select="label:label|value:value"
+                    />
+
+                    <div
+                        x-show="$wire.articleForm.visibility_mode !== 'public'"
+                        x-cloak
+                        class="space-y-2"
+                    >
+                        <div class="flex items-center justify-between">
+                            <label class="text-sm font-medium dark:text-gray-300">{{ __('Role Assignments') }}</label>
+                            <x-button :text="__('Add Role')" icon="plus" color="primary" flat xs wire:click="addRole" />
+                        </div>
+
+                        @foreach ($articleForm->roles as $index => $role)
+                            <div wire:key="role-{{ $index }}" class="flex items-end gap-2">
+                                <div class="flex-1">
+                                    <x-select.styled
+                                        wire:model="articleForm.roles.{{ $index }}.role_id"
+                                        :label="__('Role')"
+                                        select="label:label|value:id"
+                                        unfiltered
+                                        :request="['url' => route('search', \FluxErp\Models\Role::class), 'method' => 'POST']"
+                                    />
+                                </div>
+                                <div class="w-36">
+                                    <x-select.styled
+                                        wire:model="articleForm.roles.{{ $index }}.permission_level"
+                                        :label="__('Permission')"
+                                        :options="[
+                                            ['label' => __('Read'), 'value' => 'read'],
+                                            ['label' => __('Edit'), 'value' => 'edit'],
+                                        ]"
+                                        select="label:label|value:value"
+                                    />
+                                </div>
+                                <x-button icon="trash" color="red" flat wire:click="removeRole({{ $index }})" />
+                            </div>
+                        @endforeach
+
+                        <div class="mt-3 flex items-center justify-between">
+                            <label class="text-sm font-medium dark:text-gray-300">{{ __('User Assignments') }}</label>
+                            <x-button :text="__('Add User')" icon="plus" color="primary" flat xs wire:click="addUser" />
+                        </div>
+
+                        @foreach ($articleForm->users as $index => $userAssignment)
+                            <div wire:key="user-{{ $index }}" class="flex items-end gap-2">
+                                <div class="flex-1">
+                                    <x-select.styled
+                                        wire:model="articleForm.users.{{ $index }}.user_id"
+                                        :label="__('User')"
+                                        select="label:label|value:id"
+                                        unfiltered
+                                        :request="['url' => route('search', \FluxErp\Models\User::class), 'method' => 'POST']"
+                                    />
+                                </div>
+                                <div class="w-36">
+                                    <x-select.styled
+                                        wire:model="articleForm.users.{{ $index }}.permission_level"
+                                        :label="__('Permission')"
+                                        :options="[
+                                            ['label' => __('Read'), 'value' => 'read'],
+                                            ['label' => __('Edit'), 'value' => 'edit'],
+                                        ]"
+                                        select="label:label|value:value"
+                                    />
+                                </div>
+                                <x-button icon="trash" color="red" flat wire:click="removeUser({{ $index }})" />
+                            </div>
+                        @endforeach
+
+                        @if ($articleForm->visibility_mode === 'whitelist')
+                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('Only users with the assigned roles or directly assigned users can see this article.') }}</p>
+                        @else
+                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('All users except those with the assigned roles or directly assigned users can see this article.') }}</p>
+                        @endif
+                    </div>
+                </div>
 
                 @if ($articleForm->id)
                     <x-input wire:model="articleForm.change_summary" :label="__('Change Summary')" :placeholder="__('What changed?')" />
@@ -204,9 +296,13 @@
                                 sm
                             />
                         </div>
-                        <x-button :text="__('Edit')" icon="pencil" color="primary" flat wire:click="editArticle" />
-                        <x-button :text="__('Version History')" icon="clock" color="gray" flat x-on:click="$modalOpen('version-history-modal'); $wire.loadVersions()" />
-                        <x-button :text="__('Delete')" icon="trash" color="red" flat wire:flux-confirm.type.error="{{ __('wire:confirm.delete', ['model' => __('Article')]) }}" wire:click="deleteArticle" />
+                        @if ($canEdit)
+                            <x-button :text="__('Edit')" icon="pencil" color="primary" flat wire:click="editArticle" />
+                            <x-button :text="__('Version History')" icon="clock" color="gray" flat x-on:click="$modalOpen('version-history-modal'); $wire.loadVersions()" />
+                            <x-button :text="__('Delete')" icon="trash" color="red" flat wire:flux-confirm.type.error="{{ __('wire:confirm.delete', ['model' => __('Article')]) }}" wire:click="deleteArticle" />
+                        @else
+                            <x-button :text="__('Version History')" icon="clock" color="gray" flat x-on:click="$modalOpen('version-history-modal'); $wire.loadVersions()" />
+                        @endif
                     </div>
                 </div>
 
@@ -339,7 +435,9 @@
                         <p class="text-xs text-gray-400">{{ \Illuminate\Support\Carbon::parse($version['created_at'])->format('d.m.Y H:i') }}</p>
                     </div>
                     <div class="flex items-center gap-1">
-                        <x-button :text="__('Restore')" icon="arrow-uturn-left" color="primary" flat xs wire:click="restoreVersion({{ $version['id'] }})" x-on:click="$modalClose('version-history-modal')" />
+                        @if ($canEdit)
+                            <x-button :text="__('Restore')" icon="arrow-uturn-left" color="primary" flat xs wire:click="restoreVersion({{ $version['id'] }})" x-on:click="$modalClose('version-history-modal')" />
+                        @endif
                         <x-button text="A" color="gray" flat xs x-on:click="versionA = {{ $version['id'] }}" x-bind:class="versionA === {{ $version['id'] }} && 'ring-2 ring-primary-500'" />
                         <x-button text="B" color="gray" flat xs x-on:click="versionB = {{ $version['id'] }}" x-bind:class="versionB === {{ $version['id'] }} && 'ring-2 ring-primary-500'" />
                     </div>
@@ -367,7 +465,9 @@
                 <div>
                     <div class="mb-3 flex items-center justify-between">
                         <span class="font-semibold dark:text-gray-200">v{{ $comparisonVersions['a']['version_number'] }} — {{ $comparisonVersions['a']['title'] }}</span>
-                        <x-button :text="__('Restore')" icon="arrow-uturn-left" color="primary" flat sm wire:click="restoreVersion({{ $comparisonVersions['a']['id'] }})" x-on:click="$modalClose('version-comparison-modal')" />
+                        @if ($canEdit)
+                            <x-button :text="__('Restore')" icon="arrow-uturn-left" color="primary" flat sm wire:click="restoreVersion({{ $comparisonVersions['a']['id'] }})" x-on:click="$modalClose('version-comparison-modal')" />
+                        @endif
                     </div>
                     <div class="prose max-w-none rounded border p-4 dark:prose-invert dark:border-gray-700">
                         {!! $comparisonVersions['a']['content'] !!}
@@ -377,7 +477,9 @@
                 <div>
                     <div class="mb-3 flex items-center justify-between">
                         <span class="font-semibold dark:text-gray-200">v{{ $comparisonVersions['b']['version_number'] }} — {{ $comparisonVersions['b']['title'] }}</span>
-                        <x-button :text="__('Restore')" icon="arrow-uturn-left" color="primary" flat sm wire:click="restoreVersion({{ $comparisonVersions['b']['id'] }})" x-on:click="$modalClose('version-comparison-modal')" />
+                        @if ($canEdit)
+                            <x-button :text="__('Restore')" icon="arrow-uturn-left" color="primary" flat sm wire:click="restoreVersion({{ $comparisonVersions['b']['id'] }})" x-on:click="$modalClose('version-comparison-modal')" />
+                        @endif
                     </div>
                     <div class="prose max-w-none rounded border p-4 dark:prose-invert dark:border-gray-700">
                         {!! $comparisonVersions['b']['content'] !!}
@@ -390,4 +492,79 @@
             </x-slot:footer>
         </x-modal>
     @endif
+
+    {{-- Package Settings Modal --}}
+    <x-modal id="package-settings-modal" size="xl">
+        <x-slot:title>{{ __('Package Settings') }}: {{ $packageSettingsPackage }}</x-slot:title>
+
+        <div class="space-y-4">
+            <x-select.styled
+                wire:model.live="packageVisibilityMode"
+                :label="__('Visibility Mode')"
+                :options="[
+                    ['label' => __('Public'), 'value' => 'public'],
+                    ['label' => __('Whitelist'), 'value' => 'whitelist'],
+                    ['label' => __('Blacklist'), 'value' => 'blacklist'],
+                ]"
+                select="label:label|value:value"
+            />
+
+            <div
+                x-show="$wire.packageVisibilityMode !== 'public'"
+                x-cloak
+                class="space-y-4"
+            >
+                {{-- Role Assignments --}}
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <label class="text-sm font-medium dark:text-gray-300">{{ __('Role Assignments') }}</label>
+                        <x-button :text="__('Add Role')" icon="plus" color="primary" flat xs wire:click="addPackageRole" />
+                    </div>
+
+                    @foreach ($packageRoles as $index => $role)
+                        <div wire:key="pkg-role-{{ $index }}" class="flex items-end gap-2">
+                            <div class="flex-1">
+                                <x-select.styled
+                                    wire:model="packageRoles.{{ $index }}.role_id"
+                                    :label="__('Role')"
+                                    select="label:label|value:id"
+                                    unfiltered
+                                    :request="['url' => route('search', \FluxErp\Models\Role::class), 'method' => 'POST']"
+                                />
+                            </div>
+                            <x-button icon="trash" color="red" flat wire:click="removePackageRole({{ $index }})" />
+                        </div>
+                    @endforeach
+                </div>
+
+                {{-- User Assignments --}}
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <label class="text-sm font-medium dark:text-gray-300">{{ __('User Assignments') }}</label>
+                        <x-button :text="__('Add User')" icon="plus" color="primary" flat xs wire:click="addPackageUser" />
+                    </div>
+
+                    @foreach ($packageUsers as $index => $userAssignment)
+                        <div wire:key="pkg-user-{{ $index }}" class="flex items-end gap-2">
+                            <div class="flex-1">
+                                <x-select.styled
+                                    wire:model="packageUsers.{{ $index }}.user_id"
+                                    :label="__('User')"
+                                    select="label:label|value:id"
+                                    unfiltered
+                                    :request="['url' => route('search', \FluxErp\Models\User::class), 'method' => 'POST']"
+                                />
+                            </div>
+                            <x-button icon="trash" color="red" flat wire:click="removePackageUser({{ $index }})" />
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+
+        <x-slot:footer>
+            <x-button :text="__('Cancel')" color="secondary" flat x-on:click="$modalClose('package-settings-modal')" />
+            <x-button :text="__('Save')" color="primary" wire:click="savePackageSettings" x-on:click="$modalClose('package-settings-modal')" />
+        </x-slot:footer>
+    </x-modal>
 </div>

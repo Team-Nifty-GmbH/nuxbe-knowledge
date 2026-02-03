@@ -19,6 +19,22 @@ class KnowledgeArticleFactory extends Factory
             'sort_order' => $this->faker->numberBetween(0, 100),
             'is_locked' => false,
             'is_published' => true,
+            'visibility_mode' => 'public',
         ];
+    }
+
+    public function whitelist(): static
+    {
+        return $this->state(fn () => ['visibility_mode' => 'whitelist']);
+    }
+
+    public function blacklist(): static
+    {
+        return $this->state(fn () => ['visibility_mode' => 'blacklist']);
+    }
+
+    public function unpublished(): static
+    {
+        return $this->state(fn () => ['is_published' => false]);
     }
 }

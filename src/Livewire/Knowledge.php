@@ -7,6 +7,7 @@ use FluxErp\Models\Category;
 use FluxErp\Models\Language;
 use FluxErp\Traits\Livewire\Actions;
 use FluxErp\Traits\Livewire\WithFileUploads;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\UnauthorizedException;
 use Illuminate\Validation\ValidationException;
@@ -17,6 +18,7 @@ use TeamNiftyGmbH\NuxbeKnowledge\Actions\KnowledgeArticle\DeleteKnowledgeArticle
 use TeamNiftyGmbH\NuxbeKnowledge\Livewire\Forms\KnowledgeArticleForm;
 use TeamNiftyGmbH\NuxbeKnowledge\Models\KnowledgeArticle;
 use TeamNiftyGmbH\NuxbeKnowledge\Models\KnowledgeArticleVersion;
+use TeamNiftyGmbH\NuxbeKnowledge\Models\KnowledgePackageSetting;
 use TeamNiftyGmbH\NuxbeKnowledge\Support\KnowledgeManager;
 
 class Knowledge extends Component
@@ -26,6 +28,8 @@ class Knowledge extends Component
     public KnowledgeArticleForm $articleForm;
 
     public MediaUploadForm $attachments;
+
+    public bool $canEdit = false;
 
     public array $categories = [];
 
@@ -58,6 +62,14 @@ class Knowledge extends Component
 
     public array $versions = [];
 
+    public ?string $packageSettingsPackage = null;
+
+    public array $packageRoles = [];
+
+    public array $packageUsers = [];
+
+    public string $packageVisibilityMode = 'public';
+
     public function mount(): void
     {
         $this->languageId = Session::get('selectedLanguageId')
@@ -85,8 +97,8 @@ class Knowledge extends Component
 
     public function compareVersions(int $versionA, int $versionB): void
     {
-        $a = resolve_static(KnowledgeArticleVersion::class, 'query')->find($versionA);
-        $b = resolve_static(KnowledgeArticleVersion::class, 'query')->find($versionB);
+        $a = resolve_static(KnowledgeArticleVersion::class, 'query')->whereKey($versionA)->first();
+        $b = resolve_static(KnowledgeArticleVersion::class, 'query')->whereKey($versionB)->first();
 
         if ($a && $b) {
             $this->comparisonVersions = [
@@ -98,7 +110,7 @@ class Knowledge extends Component
 
     public function restoreVersion(int $versionId): void
     {
-        $version = resolve_static(KnowledgeArticleVersion::class, 'query')->find($versionId);
+        $version = resolve_static(KnowledgeArticleVersion::class, 'query')->whereKey($versionId)->first();
 
         if (! $version) {
             return;
@@ -159,6 +171,7 @@ class Knowledge extends Component
         $this->attachments->reset();
         $this->selectedArticleId = null;
         $this->editing = false;
+        $this->canEdit = false;
         $this->loadCategories();
     }
 
@@ -171,8 +184,98 @@ class Knowledge extends Component
         }
     }
 
+    public function addRole(): void
+    {
+        $this->articleForm->roles[] = ['role_id' => null, 'permission_level' => 'read'];
+    }
+
+    public function removeRole(int $index): void
+    {
+        unset($this->articleForm->roles[$index]);
+        $this->articleForm->roles = array_values($this->articleForm->roles);
+    }
+
+    public function addUser(): void
+    {
+        $this->articleForm->users[] = ['user_id' => null, 'permission_level' => 'read'];
+    }
+
+    public function removeUser(int $index): void
+    {
+        unset($this->articleForm->users[$index]);
+        $this->articleForm->users = array_values($this->articleForm->users);
+    }
+
+    public function openPackageSettings(string $package): void
+    {
+        $this->packageSettingsPackage = $package;
+
+        $manager = app(KnowledgeManager::class);
+        $setting = $manager->getPackageSetting($package);
+
+        if ($setting) {
+            $this->packageVisibilityMode = $setting->visibility_mode;
+            $this->packageRoles = $setting->roles->map(fn ($role) => ['role_id' => $role->getKey()])->toArray();
+            $this->packageUsers = $setting->users->map(fn ($user) => ['user_id' => $user->getKey()])->toArray();
+        } else {
+            $this->packageVisibilityMode = 'public';
+            $this->packageRoles = [];
+            $this->packageUsers = [];
+        }
+    }
+
+    public function savePackageSettings(): void
+    {
+        if (! $this->packageSettingsPackage) {
+            return;
+        }
+
+        $roleIds = collect($this->packageRoles)
+            ->pluck('role_id')
+            ->filter()
+            ->toArray();
+
+        $userIds = collect($this->packageUsers)
+            ->pluck('user_id')
+            ->filter()
+            ->toArray();
+
+        app(KnowledgeManager::class)->savePackageSetting(
+            $this->packageSettingsPackage,
+            $this->packageVisibilityMode,
+            $roleIds,
+            $userIds,
+        );
+
+        $this->packageSettingsPackage = null;
+        $this->loadPackageDocs();
+    }
+
+    public function addPackageRole(): void
+    {
+        $this->packageRoles[] = ['role_id' => null];
+    }
+
+    public function removePackageRole(int $index): void
+    {
+        unset($this->packageRoles[$index]);
+        $this->packageRoles = array_values($this->packageRoles);
+    }
+
+    public function addPackageUser(): void
+    {
+        $this->packageUsers[] = ['user_id' => null];
+    }
+
+    public function removePackageUser(int $index): void
+    {
+        unset($this->packageUsers[$index]);
+        $this->packageUsers = array_values($this->packageUsers);
+    }
+
     public function loadCategories(): void
     {
+        $user = Auth::user();
         $morphAlias = morph_alias(KnowledgeArticle::class);
 
         $query = resolve_static(Category::class, 'query')
@@ -184,9 +287,10 @@ class Knowledge extends Component
             }])
             ->orderBy('sort_number');
 
-        $this->categories = $query->get()->map(function ($category) {
+        $this->categories = $query->get()->map(function ($category) use ($user) {
             $articles = resolve_static(KnowledgeArticle::class, 'query')
                 ->where('is_published', true)
+                ->visibleToUser($user)
                 ->whereHas('categories', function ($q) use ($category): void {
                     $q->where('categories.id', $category->getKey());
                 })
@@ -194,9 +298,10 @@ class Knowledge extends Component
                 ->orderBy('sort_order')
                 ->get();
 
-            $children = $category->children->map(function ($child) {
+            $children = $category->children->map(function ($child) use ($user) {
                 $childArticles = resolve_static(KnowledgeArticle::class, 'query')
                     ->where('is_published', true)
+                    ->visibleToUser($user)
                     ->whereHas('categories', function ($q) use ($child): void {
                         $q->where('categories.id', $child->getKey());
                     })
@@ -215,6 +320,7 @@ class Knowledge extends Component
 
         $this->uncategorizedArticles = resolve_static(KnowledgeArticle::class, 'query')
             ->where('is_published', true)
+            ->visibleToUser($user)
             ->whereDoesntHave('categories')
             ->when($this->search, fn ($q) => $q->where('title', 'like', '%'.$this->search.'%'))
             ->orderBy('sort_order')
@@ -224,7 +330,8 @@ class Knowledge extends Component
 
     public function loadPackageDocs(): void
     {
-        $trees = app(KnowledgeManager::class)->getAllDocsTrees();
+        $user = Auth::user();
+        $trees = app(KnowledgeManager::class)->getAllVisibleDocsTrees($user);
 
         if ($this->search) {
             $trees = array_filter(array_map(function (array $config): array {
@@ -259,7 +366,7 @@ class Knowledge extends Component
         }
 
         $article = resolve_static(KnowledgeArticle::class, 'query')
-            ->find($this->articleForm->id);
+            ->whereKey($this->articleForm->id)->first();
 
         if (! $article) {
             return null;
@@ -279,6 +386,7 @@ class Knowledge extends Component
         $this->attachments->reset();
         $this->articleForm->categories = $categoryId ? [$categoryId] : [];
         $this->editing = true;
+        $this->canEdit = true;
         $this->selectedArticleId = null;
         $this->selectedPackageDoc = null;
     }
@@ -315,9 +423,11 @@ class Knowledge extends Component
 
     public function selectArticle(int $articleId): void
     {
+        $user = Auth::user();
         $article = resolve_static(KnowledgeArticle::class, 'query')
-            ->with('categories')
-            ->find($articleId);
+            ->visibleToUser($user)
+            ->with(['categories', 'roles', 'users'])
+            ->whereKey($articleId)->first();
 
         if (! $article) {
             return;
@@ -326,15 +436,31 @@ class Knowledge extends Component
         $this->selectedArticleId = $article->getKey();
         $this->articleForm->fill($article);
         $this->articleForm->categories = $article->categories->pluck('id')->toArray();
+        $this->articleForm->visibility_mode = $article->visibility_mode ?? 'public';
+        $this->articleForm->roles = $article->roles->map(fn ($role) => [
+            'role_id' => $role->getKey(),
+            'permission_level' => $role->pivot->permission_level,
+        ])->toArray();
+        $this->articleForm->users = $article->users->map(fn ($user) => [
+            'user_id' => $user->getKey(),
+            'permission_level' => $user->pivot->permission_level,
+        ])->toArray();
         $this->attachments->reset();
         $this->attachments->fill($article->getMedia('attachments'));
         $this->editing = false;
+        $this->canEdit = $article->userCanEdit($user);
         $this->selectedPackageDoc = null;
     }
 
     public function selectPackageDoc(string $package, string $relativePath): void
     {
         $manager = app(KnowledgeManager::class);
+        $user = Auth::user();
+
+        if (! $manager->isPackageVisibleToUser($package, $user)) {
+            return;
+        }
+
         $html = $manager->renderDoc($package, $relativePath);
         $packages = $manager->getRegisteredPackages();
 
@@ -351,6 +477,7 @@ class Knowledge extends Component
         $this->articleForm->reset();
         $this->attachments->reset();
         $this->editing = false;
+        $this->canEdit = false;
     }
 
     public function updatedSearch(): void

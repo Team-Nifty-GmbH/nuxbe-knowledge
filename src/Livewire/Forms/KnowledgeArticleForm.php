@@ -20,9 +20,15 @@ class KnowledgeArticleForm extends FluxForm
 
     public bool $is_published = true;
 
+    public array $roles = [];
+
     public int $sort_order = 0;
 
+    public array $users = [];
+
     public ?string $title = null;
+
+    public string $visibility_mode = 'public';
 
     public function getActions(): array
     {
