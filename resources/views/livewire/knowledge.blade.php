@@ -1,6 +1,20 @@
-<div class="flex h-full gap-6" x-data="{ versionA: null, versionB: null, sidebarOpen: true }">
+<div
+    class="flex h-full gap-6"
+    x-data="{
+        versionA: null,
+        versionB: null,
+        sidebarOpen: true,
+        isDesktop: window.matchMedia('(min-width: 768px)').matches
+    }"
+    x-init="window.matchMedia('(min-width: 768px)').addEventListener('change', e => isDesktop = e.matches)"
+>
     {{-- Sidebar --}}
-    <div x-bind:class="!sidebarOpen && 'hidden lg:block'" class="w-full shrink-0 overflow-y-auto rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800 lg:w-72">
+    <div
+        x-show="isDesktop || sidebarOpen"
+        x-cloak
+        x-bind:class="isDesktop ? 'w-72 shrink-0' : 'w-full'"
+        class="overflow-y-auto rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
+    >
         <div class="mb-4 flex items-center justify-between">
             <h2 class="text-lg font-semibold dark:text-gray-100">{{ __('Knowledge Base') }}</h2>
             <div class="flex gap-1">
@@ -114,13 +128,17 @@
     </div>
 
     {{-- Content Area --}}
-    <div x-bind:class="sidebarOpen && 'hidden lg:block'" class="w-full flex-1 overflow-y-auto rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800 lg:w-auto">
+    <div
+        x-show="isDesktop || !sidebarOpen"
+        x-cloak
+        class="flex-1 overflow-y-auto rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800"
+    >
         @if ($editing)
             {{-- Edit Mode --}}
             <div class="space-y-4">
                 @if ($articleForm->id)
                     <div class="flex items-center justify-between">
-                        <x-button icon="arrow-left" color="gray" flat sm class="lg:hidden" x-on:click="sidebarOpen = true" />
+                        <x-button icon="arrow-left" color="gray" flat sm x-show="!isDesktop" x-on:click="sidebarOpen = true" />
                         <div class="w-48">
                             <x-select.styled
                                 wire:model="languageId"
@@ -132,7 +150,7 @@
                         </div>
                     </div>
                 @else
-                    <x-button icon="arrow-left" color="gray" flat sm class="lg:hidden" x-on:click="sidebarOpen = true" />
+                    <x-button icon="arrow-left" color="gray" flat sm x-show="!isDesktop" x-on:click="sidebarOpen = true" />
                 @endif
 
                 <x-input wire:model="articleForm.title" :label="__('Title')" />
@@ -173,7 +191,7 @@
             <div>
                 <div class="mb-4 flex items-center justify-between gap-2">
                     <div class="flex items-center gap-2">
-                        <x-button icon="arrow-left" color="gray" flat sm class="lg:hidden" x-on:click="sidebarOpen = true" />
+                        <x-button icon="arrow-left" color="gray" flat sm x-show="!isDesktop" x-on:click="sidebarOpen = true" />
                         <h1 class="text-2xl font-bold dark:text-gray-100">{{ $articleForm->title }}</h1>
                     </div>
                     <div class="flex items-center gap-2">
@@ -219,7 +237,7 @@
             <div x-data="{ lightboxSrc: null }">
                 <div class="mb-4 flex items-center justify-between">
                     <div class="flex items-center gap-2">
-                        <x-button icon="arrow-left" color="gray" flat sm class="lg:hidden" x-on:click="sidebarOpen = true" />
+                        <x-button icon="arrow-left" color="gray" flat sm x-show="!isDesktop" x-on:click="sidebarOpen = true" />
                         <x-badge color="gray" :text="$selectedPackageDoc['label']" />
                         <x-icon name="lock-closed" class="h-4 w-4 text-gray-400" />
                     </div>
@@ -285,7 +303,7 @@
         @else
             {{-- Empty State --}}
             <div class="flex h-full flex-col text-gray-400 dark:text-gray-500">
-                <x-button icon="arrow-left" color="gray" flat sm class="self-start lg:hidden" x-on:click="sidebarOpen = true" />
+                <x-button icon="arrow-left" color="gray" flat sm class="self-start" x-show="!isDesktop" x-on:click="sidebarOpen = true" />
                 <div class="flex flex-1 items-center justify-center">
                     <div class="text-center">
                         <x-icon name="book-open" class="mx-auto h-12 w-12" />
