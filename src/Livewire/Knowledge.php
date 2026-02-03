@@ -18,7 +18,6 @@ use TeamNiftyGmbH\NuxbeKnowledge\Actions\KnowledgeArticle\DeleteKnowledgeArticle
 use TeamNiftyGmbH\NuxbeKnowledge\Livewire\Forms\KnowledgeArticleForm;
 use TeamNiftyGmbH\NuxbeKnowledge\Models\KnowledgeArticle;
 use TeamNiftyGmbH\NuxbeKnowledge\Models\KnowledgeArticleVersion;
-use TeamNiftyGmbH\NuxbeKnowledge\Models\KnowledgePackageSetting;
 use TeamNiftyGmbH\NuxbeKnowledge\Support\KnowledgeManager;
 
 class Knowledge extends Component
