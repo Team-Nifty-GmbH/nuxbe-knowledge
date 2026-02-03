@@ -3,6 +3,7 @@
 namespace TeamNiftyGmbH\NuxbeKnowledge\Actions\KnowledgeArticle;
 
 use FluxErp\Actions\FluxAction;
+use Illuminate\Support\Arr;
 use League\HTMLToMarkdown\HtmlConverter;
 use TeamNiftyGmbH\NuxbeKnowledge\Models\KnowledgeArticle;
 use TeamNiftyGmbH\NuxbeKnowledge\Models\KnowledgeArticleVersion;
@@ -22,7 +23,7 @@ class CreateKnowledgeArticle extends FluxAction
 
     public function performAction(): KnowledgeArticle
     {
-        $changeSummary = $this->getData('change_summary');
+        $changeSummary = Arr::pull($this->data, 'change_summary');
 
         if (! empty($this->data['content'])) {
             $converter = new HtmlConverter;
@@ -39,7 +40,6 @@ class CreateKnowledgeArticle extends FluxAction
             'content_markdown' => $article->content_markdown,
             'version_number' => 1,
             'change_summary' => $changeSummary,
-            'created_by' => auth()->id(),
         ]])->save();
 
         return $article->withoutRelations()->fresh();
