@@ -4,6 +4,7 @@ namespace TeamNiftyGmbH\NuxbeKnowledge\Support;
 
 use FluxErp\Models\Language;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
@@ -73,17 +74,17 @@ class KnowledgeManager
             return null;
         }
 
-        $fullPath = $path.'/'.ltrim($relativePath, '/');
+        $fullPath = $path . '/' . ltrim($relativePath, '/');
 
         if (! file_exists($fullPath) || ! str_ends_with($fullPath, '.md')) {
             return null;
         }
 
         $languageCode = $this->resolveLanguageCode();
-        $cacheKey = "knowledge.docs.rendered.{$package}.{$languageCode}.".md5($relativePath).'.'.filemtime($fullPath);
+        $cacheKey = "knowledge.docs.rendered.{$package}.{$languageCode}." . md5($relativePath) . '.' . filemtime($fullPath);
 
         return Cache::remember($cacheKey, 3600, function () use ($fullPath, $package): string {
-            $markdown = file_get_contents($fullPath);
+            $markdown = Blade::render(file_get_contents($fullPath));
             $converter = new GithubFlavoredMarkdownConverter([
                 'html_input' => 'strip',
                 'allow_unsafe_links' => false,
@@ -104,8 +105,8 @@ class KnowledgeManager
                         return $matches[0];
                     }
 
-                    $absoluteImgPath = realpath(dirname($fullPath).'/'.$src)
-                        ?: realpath($languagePath.'/'.$src);
+                    $absoluteImgPath = realpath(dirname($fullPath) . '/' . $src)
+                        ?: realpath($languagePath . '/' . $src);
 
                     if (! $absoluteImgPath) {
                         return $matches[0];
@@ -113,7 +114,7 @@ class KnowledgeManager
 
                     $resolvedSrc = ltrim(str_replace($docsBaseDir, '', $absoluteImgPath), '/');
 
-                    return $matches[1].route('knowledge.docs.asset', ['package' => $package, 'path' => $resolvedSrc]).$matches[3];
+                    return $matches[1] . route('knowledge.docs.asset', ['package' => $package, 'path' => $resolvedSrc]) . $matches[3];
                 },
                 $html
             );
@@ -129,8 +130,8 @@ class KnowledgeManager
                         return $matches[0];
                     }
 
-                    $absoluteLinkPath = realpath(dirname($fullPath).'/'.$href)
-                        ?: realpath($languagePath.'/'.$href);
+                    $absoluteLinkPath = realpath(dirname($fullPath) . '/' . $href)
+                        ?: realpath($languagePath . '/' . $href);
 
                     if (! $absoluteLinkPath || ! str_starts_with($absoluteLinkPath, $languagePath)) {
                         return $matches[0];
@@ -138,7 +139,7 @@ class KnowledgeManager
 
                     $resolvedPath = ltrim(str_replace($languagePath, '', $absoluteLinkPath), '/');
 
-                    return '<a '.$matches[1].'href="'.$fragment.'" data-doc-link="'.e($resolvedPath).'"'.$matches[4].'>';
+                    return '<a ' . $matches[1] . 'href="' . $fragment . '" data-doc-link="' . e($resolvedPath) . '"' . $matches[4] . '>';
                 },
                 $html
             );
@@ -332,7 +333,7 @@ class KnowledgeManager
                 continue;
             }
 
-            $fullPath = $currentPath.'/'.$entry;
+            $fullPath = $currentPath . '/' . $entry;
             $relativePath = ltrim(str_replace($basePath, '', $fullPath), '/');
 
             if (is_dir($fullPath)) {
