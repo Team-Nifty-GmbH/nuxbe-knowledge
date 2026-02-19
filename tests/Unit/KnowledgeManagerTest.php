@@ -177,6 +177,24 @@ test('gets docs tree for correct language', function (): void {
     expect($html)->toContain('English test doc');
 });
 
+test('renders blade directives in markdown docs', function (): void {
+    app()->setLocale('de');
+
+    $manager = new KnowledgeManager;
+
+    $manager->registerDocs(
+        package: 'test-package',
+        path: __DIR__.'/../fixtures/docs',
+        label: 'Test Docs',
+    );
+
+    $html = $manager->renderDoc('test-package', 'blade-test.md');
+
+    expect($html)
+        ->toContain('Current locale: de')
+        ->not->toContain('{{');
+});
+
 test('returns null for non-registered package', function (): void {
     $manager = new KnowledgeManager;
 

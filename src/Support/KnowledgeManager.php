@@ -4,6 +4,7 @@ namespace TeamNiftyGmbH\NuxbeKnowledge\Support;
 
 use FluxErp\Models\Language;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
@@ -83,7 +84,7 @@ class KnowledgeManager
         $cacheKey = "knowledge.docs.rendered.{$package}.{$languageCode}.".md5($relativePath).'.'.filemtime($fullPath);
 
         return Cache::remember($cacheKey, 3600, function () use ($fullPath, $package): string {
-            $markdown = file_get_contents($fullPath);
+            $markdown = Blade::render(file_get_contents($fullPath));
             $converter = new GithubFlavoredMarkdownConverter([
                 'html_input' => 'strip',
                 'allow_unsafe_links' => false,
