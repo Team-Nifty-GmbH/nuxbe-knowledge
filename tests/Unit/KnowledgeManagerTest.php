@@ -5,11 +5,11 @@ use Illuminate\Support\Facades\Session;
 use TeamNiftyGmbH\NuxbeKnowledge\Support\KnowledgeManager;
 
 test('can register package docs with string path', function (): void {
-    $manager = new KnowledgeManager();
+    $manager = new KnowledgeManager;
 
     $manager->registerDocs(
         package: 'test-package',
-        path: __DIR__ . '/../fixtures/docs',
+        path: __DIR__.'/../fixtures/docs',
         label: 'Test Docs',
         icon: 'book-open',
     );
@@ -22,13 +22,13 @@ test('can register package docs with string path', function (): void {
 });
 
 test('can register package docs with array paths', function (): void {
-    $manager = new KnowledgeManager();
+    $manager = new KnowledgeManager;
 
     $manager->registerDocs(
         package: 'test-package',
         path: [
-            'de' => __DIR__ . '/../fixtures/docs',
-            'en' => __DIR__ . '/../fixtures/docs-en',
+            'de' => __DIR__.'/../fixtures/docs',
+            'en' => __DIR__.'/../fixtures/docs-en',
         ],
         label: 'Test Docs',
         icon: 'book-open',
@@ -42,9 +42,9 @@ test('can register package docs with array paths', function (): void {
 });
 
 test('can get docs tree from filesystem', function (): void {
-    $manager = new KnowledgeManager();
+    $manager = new KnowledgeManager;
 
-    $fixturePath = __DIR__ . '/../fixtures/docs';
+    $fixturePath = __DIR__.'/../fixtures/docs';
 
     $manager->registerDocs(
         package: 'test-package',
@@ -59,9 +59,9 @@ test('can get docs tree from filesystem', function (): void {
 });
 
 test('can render markdown to html', function (): void {
-    $manager = new KnowledgeManager();
+    $manager = new KnowledgeManager;
 
-    $fixturePath = __DIR__ . '/../fixtures/docs';
+    $fixturePath = __DIR__.'/../fixtures/docs';
 
     $manager->registerDocs(
         package: 'test-package',
@@ -79,9 +79,9 @@ test('can render markdown to html', function (): void {
 });
 
 test('resolves default path for string registered docs', function (): void {
-    $manager = new KnowledgeManager();
+    $manager = new KnowledgeManager;
 
-    $fixturePath = __DIR__ . '/../fixtures/docs';
+    $fixturePath = __DIR__.'/../fixtures/docs';
 
     $manager->registerDocs(
         package: 'test-package',
@@ -97,10 +97,10 @@ test('resolves language path based on session language', function (): void {
 
     Session::put('selectedLanguageId', $language->getKey());
 
-    $manager = new KnowledgeManager();
+    $manager = new KnowledgeManager;
 
-    $dePath = __DIR__ . '/../fixtures/docs';
-    $enPath = __DIR__ . '/../fixtures/docs-en';
+    $dePath = __DIR__.'/../fixtures/docs';
+    $enPath = __DIR__.'/../fixtures/docs-en';
 
     $manager->registerDocs(
         package: 'test-package',
@@ -117,10 +117,10 @@ test('falls back to default language when session language has no docs', functio
 
     Session::put('selectedLanguageId', $frLanguage->getKey());
 
-    $manager = new KnowledgeManager();
+    $manager = new KnowledgeManager;
 
-    $dePath = __DIR__ . '/../fixtures/docs';
-    $enPath = __DIR__ . '/../fixtures/docs-en';
+    $dePath = __DIR__.'/../fixtures/docs';
+    $enPath = __DIR__.'/../fixtures/docs-en';
 
     $manager->registerDocs(
         package: 'test-package',
@@ -137,10 +137,10 @@ test('falls back to first available path when no matching language', function ()
 
     Session::put('selectedLanguageId', $esLanguage->getKey());
 
-    $manager = new KnowledgeManager();
+    $manager = new KnowledgeManager;
 
-    $dePath = __DIR__ . '/../fixtures/docs';
-    $enPath = __DIR__ . '/../fixtures/docs-en';
+    $dePath = __DIR__.'/../fixtures/docs';
+    $enPath = __DIR__.'/../fixtures/docs-en';
 
     $manager->registerDocs(
         package: 'test-package',
@@ -156,13 +156,13 @@ test('gets docs tree for correct language', function (): void {
 
     Session::put('selectedLanguageId', $language->getKey());
 
-    $manager = new KnowledgeManager();
+    $manager = new KnowledgeManager;
 
     $manager->registerDocs(
         package: 'test-package',
         path: [
-            'de' => __DIR__ . '/../fixtures/docs',
-            'en' => __DIR__ . '/../fixtures/docs-en',
+            'de' => __DIR__.'/../fixtures/docs',
+            'en' => __DIR__.'/../fixtures/docs-en',
         ],
         label: 'Test Docs',
     );
@@ -180,11 +180,11 @@ test('gets docs tree for correct language', function (): void {
 test('renders blade directives in markdown docs', function (): void {
     app()->setLocale('de');
 
-    $manager = new KnowledgeManager();
+    $manager = new KnowledgeManager;
 
     $manager->registerDocs(
         package: 'test-package',
-        path: __DIR__ . '/../fixtures/docs',
+        path: __DIR__.'/../fixtures/docs',
         label: 'Test Docs',
     );
 
@@ -196,7 +196,7 @@ test('renders blade directives in markdown docs', function (): void {
 });
 
 test('returns null for non-registered package', function (): void {
-    $manager = new KnowledgeManager();
+    $manager = new KnowledgeManager;
 
     expect($manager->resolveLanguagePath('non-existent'))->toBeNull();
 });
