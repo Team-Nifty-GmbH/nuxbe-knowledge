@@ -32,7 +32,6 @@
     "prefer-stable": true,
     "require": {
         "php": "^8.5",
-        "laravel/pint": "^1.25",
         "team-nifty-gmbh/flux-erp": "^1.0",
         "league/commonmark": "^2.0",
         "league/html-to-markdown": "^5.0",
@@ -40,8 +39,9 @@
     },
     "require-dev": {
         "brianium/paratest": "^7.0",
+        "laravel/pint": "^1.25",
         "orchestra/testbench": "^11.0",
-        "pestphp/pest": "^4.0.4",
+        "pestphp/pest": "^4.0",
         "pestphp/pest-plugin-livewire": "^4.0"
     },
     "scripts": {
