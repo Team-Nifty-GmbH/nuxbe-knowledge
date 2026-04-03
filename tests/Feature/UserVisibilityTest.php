@@ -3,6 +3,8 @@
 use FluxErp\Models\Language;
 use FluxErp\Models\User;
 use Spatie\Permission\Models\Role;
+use TeamNiftyGmbH\NuxbeKnowledge\Actions\KnowledgeArticle\CreateKnowledgeArticle;
+use TeamNiftyGmbH\NuxbeKnowledge\Actions\KnowledgeArticle\UpdateKnowledgeArticle;
 use TeamNiftyGmbH\NuxbeKnowledge\Models\KnowledgeArticle;
 
 beforeEach(function (): void {
@@ -87,7 +89,7 @@ test('user with read permission on article cannot edit', function (): void {
 test('create article with users syncs pivot data', function (): void {
     $user = createTestUser($this);
 
-    $article = \TeamNiftyGmbH\NuxbeKnowledge\Actions\KnowledgeArticle\CreateKnowledgeArticle::make([
+    $article = CreateKnowledgeArticle::make([
         'title' => 'User Restricted Article',
         'content' => '<p>Content</p>',
         'visibility_mode' => 'whitelist',
@@ -109,7 +111,7 @@ test('update article with users syncs pivot data', function (): void {
     $userB = createTestUser($this);
     $article->users()->attach($userA->getKey(), ['permission_level' => 'read']);
 
-    \TeamNiftyGmbH\NuxbeKnowledge\Actions\KnowledgeArticle\UpdateKnowledgeArticle::make([
+    UpdateKnowledgeArticle::make([
         'id' => $article->getKey(),
         'users' => [
             ['user_id' => $userB->getKey(), 'permission_level' => 'edit'],
