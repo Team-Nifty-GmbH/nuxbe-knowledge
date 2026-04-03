@@ -31,7 +31,7 @@
     "minimum-stability": "dev",
     "prefer-stable": true,
     "require": {
-        "php": "^8.4",
+        "php": "^8.5",
         "laravel/pint": "^1.25",
         "team-nifty-gmbh/flux-erp": "^1.0",
         "league/commonmark": "^2.0",
