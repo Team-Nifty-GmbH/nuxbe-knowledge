@@ -3,6 +3,8 @@
 use FluxErp\Models\Language;
 use FluxErp\Models\User;
 use Spatie\Permission\Models\Role;
+use TeamNiftyGmbH\NuxbeKnowledge\Actions\KnowledgeArticle\CreateKnowledgeArticle;
+use TeamNiftyGmbH\NuxbeKnowledge\Actions\KnowledgeArticle\UpdateKnowledgeArticle;
 use TeamNiftyGmbH\NuxbeKnowledge\Models\KnowledgeArticle;
 
 beforeEach(function (): void {
@@ -145,7 +147,7 @@ test('guest cannot edit', function (): void {
 });
 
 test('create article with roles syncs pivot data', function (): void {
-    $article = \TeamNiftyGmbH\NuxbeKnowledge\Actions\KnowledgeArticle\CreateKnowledgeArticle::make([
+    $article = CreateKnowledgeArticle::make([
         'title' => 'Restricted Article',
         'content' => '<p>Content</p>',
         'visibility_mode' => 'whitelist',
@@ -172,7 +174,7 @@ test('update article visibility_mode persists', function (): void {
 
     expect($article->visibility_mode)->toBe('public');
 
-    $updated = \TeamNiftyGmbH\NuxbeKnowledge\Actions\KnowledgeArticle\UpdateKnowledgeArticle::make([
+    $updated = UpdateKnowledgeArticle::make([
         'id' => $article->getKey(),
         'visibility_mode' => 'whitelist',
     ])->validate()->execute();
@@ -188,7 +190,7 @@ test('update article visibility_mode can change back to public', function (): vo
 
     expect($article->visibility_mode)->toBe('whitelist');
 
-    \TeamNiftyGmbH\NuxbeKnowledge\Actions\KnowledgeArticle\UpdateKnowledgeArticle::make([
+    UpdateKnowledgeArticle::make([
         'id' => $article->getKey(),
         'visibility_mode' => 'public',
     ])->validate()->execute();
@@ -202,7 +204,7 @@ test('update article with roles syncs pivot data', function (): void {
     $article = KnowledgeArticle::factory()->whitelist()->create();
     $article->roles()->attach($this->roleA->getKey(), ['permission_level' => 'read']);
 
-    \TeamNiftyGmbH\NuxbeKnowledge\Actions\KnowledgeArticle\UpdateKnowledgeArticle::make([
+    UpdateKnowledgeArticle::make([
         'id' => $article->getKey(),
         'roles' => [
             ['role_id' => $this->roleB->getKey(), 'permission_level' => 'edit'],
