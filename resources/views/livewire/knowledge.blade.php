@@ -92,7 +92,7 @@
                     <x-icon name="lock-closed" class="h-3 w-3 text-gray-400" />
                     <span class="flex-1 text-sm font-medium dark:text-gray-200">{{ $config['label'] }}</span>
                     @if (auth()->user()?->hasRole('Super Admin'))
-                        <x-button icon="cog-6-tooth" color="gray" flat xs wire:click.stop="openPackageSettings('{{ $package }}')" x-on:click.stop="$modalOpen('package-settings-modal')" />
+                        <x-button icon="cog-6-tooth" color="gray" flat xs wire:click.stop="openPackageSettings('{{ $package }}')" x-on:click.stop="$tsui.open.modal('package-settings-modal')" />
                     @endif
                 </div>
                 <div x-show="open" x-cloak class="ml-5 space-y-0.5">
@@ -298,10 +298,10 @@
                         </div>
                         @if ($canEdit)
                             <x-button :text="__('Edit')" icon="pencil" color="primary" flat wire:click="editArticle" />
-                            <x-button :text="__('Version History')" icon="clock" color="gray" flat x-on:click="$modalOpen('version-history-modal'); $wire.loadVersions()" />
+                            <x-button :text="__('Version History')" icon="clock" color="gray" flat x-on:click="$tsui.open.modal('version-history-modal'); $wire.loadVersions()" />
                             <x-button :text="__('Delete')" icon="trash" color="red" flat wire:flux-confirm.type.error="{{ __('wire:confirm.delete', ['model' => __('Article')]) }}" wire:click="deleteArticle" />
                         @else
-                            <x-button :text="__('Version History')" icon="clock" color="gray" flat x-on:click="$modalOpen('version-history-modal'); $wire.loadVersions()" />
+                            <x-button :text="__('Version History')" icon="clock" color="gray" flat x-on:click="$tsui.open.modal('version-history-modal'); $wire.loadVersions()" />
                         @endif
                     </div>
                 </div>
@@ -436,7 +436,7 @@
                     </div>
                     <div class="flex items-center gap-1">
                         @if ($canEdit)
-                            <x-button :text="__('Restore')" icon="arrow-uturn-left" color="primary" flat xs wire:click="restoreVersion({{ $version['id'] }})" x-on:click="$modalClose('version-history-modal')" />
+                            <x-button :text="__('Restore')" icon="arrow-uturn-left" color="primary" flat xs wire:click="restoreVersion({{ $version['id'] }})" x-on:click="$tsui.close.modal('version-history-modal')" />
                         @endif
                         <x-button text="A" color="gray" flat xs x-on:click="versionA = {{ $version['id'] }}" x-bind:class="versionA === {{ $version['id'] }} && 'ring-2 ring-primary-500'" />
                         <x-button text="B" color="gray" flat xs x-on:click="versionB = {{ $version['id'] }}" x-bind:class="versionB === {{ $version['id'] }} && 'ring-2 ring-primary-500'" />
@@ -447,12 +447,12 @@
 
         <template x-if="versionA && versionB">
             <div class="mt-4">
-                <x-button :text="__('Compare Versions')" color="primary" x-on:click="$wire.compareVersions(versionA, versionB).then(() => { $modalClose('version-history-modal'); $modalOpen('version-comparison-modal'); })" />
+                <x-button :text="__('Compare Versions')" color="primary" x-on:click="await $wire.compareVersions(versionA, versionB); $tsui.close.modal('version-history-modal'); $tsui.open.modal('version-comparison-modal');" />
             </div>
         </template>
 
         <x-slot:footer>
-            <x-button :text="__('Cancel')" color="secondary" flat x-on:click="$modalClose('version-history-modal')" />
+            <x-button :text="__('Cancel')" color="secondary" flat x-on:click="$tsui.close.modal('version-history-modal')" />
         </x-slot:footer>
     </x-modal>
 
@@ -466,7 +466,7 @@
                     <div class="mb-3 flex items-center justify-between">
                         <span class="font-semibold dark:text-gray-200">v{{ $comparisonVersions['a']['version_number'] }} — {{ $comparisonVersions['a']['title'] }}</span>
                         @if ($canEdit)
-                            <x-button :text="__('Restore')" icon="arrow-uturn-left" color="primary" flat sm wire:click="restoreVersion({{ $comparisonVersions['a']['id'] }})" x-on:click="$modalClose('version-comparison-modal')" />
+                            <x-button :text="__('Restore')" icon="arrow-uturn-left" color="primary" flat sm wire:click="restoreVersion({{ $comparisonVersions['a']['id'] }})" x-on:click="$tsui.close.modal('version-comparison-modal')" />
                         @endif
                     </div>
                     <div class="prose max-w-none rounded border p-4 dark:prose-invert dark:border-gray-700">
@@ -478,7 +478,7 @@
                     <div class="mb-3 flex items-center justify-between">
                         <span class="font-semibold dark:text-gray-200">v{{ $comparisonVersions['b']['version_number'] }} — {{ $comparisonVersions['b']['title'] }}</span>
                         @if ($canEdit)
-                            <x-button :text="__('Restore')" icon="arrow-uturn-left" color="primary" flat sm wire:click="restoreVersion({{ $comparisonVersions['b']['id'] }})" x-on:click="$modalClose('version-comparison-modal')" />
+                            <x-button :text="__('Restore')" icon="arrow-uturn-left" color="primary" flat sm wire:click="restoreVersion({{ $comparisonVersions['b']['id'] }})" x-on:click="$tsui.close.modal('version-comparison-modal')" />
                         @endif
                     </div>
                     <div class="prose max-w-none rounded border p-4 dark:prose-invert dark:border-gray-700">
@@ -488,7 +488,7 @@
             </div>
 
             <x-slot:footer>
-                <x-button :text="__('Close')" color="secondary" flat x-on:click="$modalClose('version-comparison-modal')" />
+                <x-button :text="__('Close')" color="secondary" flat x-on:click="$tsui.close.modal('version-comparison-modal')" />
             </x-slot:footer>
         </x-modal>
     @endif
@@ -563,8 +563,8 @@
         </div>
 
         <x-slot:footer>
-            <x-button :text="__('Cancel')" color="secondary" flat x-on:click="$modalClose('package-settings-modal')" />
-            <x-button :text="__('Save')" color="primary" wire:click="savePackageSettings" x-on:click="$modalClose('package-settings-modal')" />
+            <x-button :text="__('Cancel')" color="secondary" flat x-on:click="$tsui.close.modal('package-settings-modal')" />
+            <x-button :text="__('Save')" color="primary" wire:click="savePackageSettings" x-on:click="$tsui.close.modal('package-settings-modal')" />
         </x-slot:footer>
     </x-modal>
 </div>
