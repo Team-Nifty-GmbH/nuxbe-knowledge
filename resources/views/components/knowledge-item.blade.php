@@ -2,6 +2,7 @@
     'items',
     'package',
     'selectedPackageDoc' => null,
+    'isSearching' => false,
 ])
 
 @foreach ($items as $item)
@@ -14,7 +15,15 @@
             {{ $item['name'] }}
         </div>
     @elseif (($item['type'] ?? '') === 'directory')
-        <div x-data="{ subOpen: false }" class="w-full">
+        <div
+            x-data="{ subOpen: @js($isSearching) }"
+            x-init="
+                $watch('isSearching', (value) => {
+                    if (value) subOpen = true
+                })
+            "
+            class="w-full"
+        >
             <div
                 class="flex cursor-pointer items-center gap-1 rounded px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-700"
                 x-on:click="subOpen = !subOpen"
@@ -38,6 +47,7 @@
                     :items="$item['children']"
                     :package="$package"
                     :selectedPackageDoc="$selectedPackageDoc"
+                    :is-searching="$isSearching"
                 />
             </div>
         </div>

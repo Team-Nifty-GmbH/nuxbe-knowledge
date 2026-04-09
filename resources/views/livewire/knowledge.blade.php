@@ -29,7 +29,10 @@
         {{-- User Categories --}}
         <div class="space-y-1">
             @foreach ($categories as $category)
-                <div x-data="{ open: true }">
+                <div
+                    x-data="{ open: @js(mb_strlen($search) > 0) || false }"
+                    x-init="$watch('$wire.search', value => { if (value.length > 0) open = true })"
+                >
                     <div class="flex cursor-pointer items-center gap-1 rounded px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-700" x-on:click="open = !open">
                         <x-icon name="chevron-right" class="h-4 w-4 transition-transform" x-bind:class="open && 'rotate-90'" />
                         <span class="flex-1 text-sm font-medium dark:text-gray-200">{{ $category['name'] }}</span>
@@ -47,7 +50,10 @@
 
                         {{-- Child Categories --}}
                         @foreach ($category['children'] ?? [] as $child)
-                            <div x-data="{ childOpen: true }">
+                            <div
+                                x-data="{ childOpen: @js(mb_strlen($search) > 0) || false }"
+                                x-init="$watch('$wire.search', value => { if (value.length > 0) childOpen = true })"
+                            >
                                 <div class="flex cursor-pointer items-center gap-1 rounded px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-700" x-on:click="childOpen = !childOpen">
                                     <x-icon name="chevron-right" class="h-3 w-3 transition-transform" x-bind:class="childOpen && 'rotate-90'" />
                                     <span class="flex-1 text-sm dark:text-gray-300">{{ $child['name'] }}</span>
@@ -86,7 +92,11 @@
 
         {{-- Package Docs --}}
         @foreach ($packageDocs as $package => $config)
-            <div class="mt-4 border-t pt-4 dark:border-gray-700" x-data="{ open: false }">
+            <div
+                class="mt-4 border-t pt-4 dark:border-gray-700"
+                x-data="{ open: @js(mb_strlen($search) > 0) }"
+                x-init="$watch('$wire.search', value => { if (value.length > 0) open = true })"
+            >
                 <div class="flex cursor-pointer items-center gap-1 rounded px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-700" x-on:click="open = !open">
                     <x-icon name="chevron-right" class="h-4 w-4 transition-transform" x-bind:class="open && 'rotate-90'" />
                     <x-icon name="lock-closed" class="h-3 w-3 text-gray-400" />
@@ -101,6 +111,7 @@
                         :items="$config['tree']"
                         :package="$package"
                         :selectedPackageDoc="$selectedPackageDoc"
+                        :is-searching="mb_strlen($search) > 0"
                     />
                 </div>
             </div>
