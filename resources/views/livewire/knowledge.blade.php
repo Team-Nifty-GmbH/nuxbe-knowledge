@@ -95,36 +95,13 @@
                         <x-button icon="cog-6-tooth" color="gray" flat xs wire:click.stop="openPackageSettings('{{ $package }}')" x-on:click.stop="$tsui.open.modal('package-settings-modal')" />
                     @endif
                 </div>
-                <div x-show="open" x-cloak class="ml-5 space-y-0.5">
-                    @foreach ($config['tree'] as $item)
-                        @if (($item['type'] ?? '') === 'file')
-                            <div
-                                class="cursor-pointer rounded px-2 py-1 text-sm hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 {{ $selectedPackageDoc && $selectedPackageDoc['package'] === $package && $selectedPackageDoc['path'] === $item['relative_path'] ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-400' : '' }}"
-                                wire:click="selectPackageDoc('{{ $package }}', '{{ $item['relative_path'] }}')" x-on:click="sidebarOpen = false"
-                            >
-                                {{ $item['name'] }}
-                            </div>
-                        @elseif (($item['type'] ?? '') === 'directory')
-                            <div x-data="{ subOpen: false }">
-                                <div class="flex cursor-pointer items-center gap-1 rounded px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-700" x-on:click="subOpen = !subOpen">
-                                    <x-icon name="chevron-right" class="h-3 w-3 transition-transform" x-bind:class="subOpen && 'rotate-90'" />
-                                    <span class="text-sm dark:text-gray-300">{{ $item['name'] }}</span>
-                                </div>
-                                <div x-show="subOpen" x-cloak class="ml-4 space-y-0.5">
-                                    @foreach ($item['children'] ?? [] as $child)
-                                        @if (($child['type'] ?? '') === 'file')
-                                            <div
-                                                class="cursor-pointer rounded px-2 py-1 text-sm hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 {{ $selectedPackageDoc && $selectedPackageDoc['package'] === $package && $selectedPackageDoc['path'] === $child['relative_path'] ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-400' : '' }}"
-                                                wire:click="selectPackageDoc('{{ $package }}', '{{ $child['relative_path'] }}')" x-on:click="sidebarOpen = false"
-                                            >
-                                                {{ $child['name'] }}
-                                            </div>
-                                        @endif
-                                    @endforeach
-                                </div>
-                            </div>
-                        @endif
-                    @endforeach
+
+                <div x-show="open" x-cloak class="ml-5 mt-1 space-y-0.5">
+                    <x-nuxbe-knowledge::knowledge-item
+                        :items="$config['tree']"
+                        :package="$package"
+                        :selectedPackageDoc="$selectedPackageDoc"
+                    />
                 </div>
             </div>
         @endforeach
