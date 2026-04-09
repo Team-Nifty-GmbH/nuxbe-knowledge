@@ -136,10 +136,7 @@ class Knowledge extends Component
             $oldPath = $this->selectedPackageDoc['path'];
             $prefix = explode('-', pathinfo($oldPath, PATHINFO_FILENAME))[0];
 
-            $newPath = collect($this->packageDocs[$package]['tree'] ?? [])
-                ->first(fn (array $item): bool => ($item['type'] ?? '') === 'file'
-                    && str_starts_with(pathinfo($item['relative_path'], PATHINFO_FILENAME), $prefix.'-')
-                );
+            $newPath = $this->findFileInTree($this->packageDocs[$package]['tree'] ?? [], $prefix);
 
             if ($newPath) {
                 $this->selectPackageDoc($package, $newPath['relative_path']);
@@ -293,7 +290,7 @@ class Knowledge extends Component
                 ->whereHas('categories', function ($q) use ($category): void {
                     $q->where('categories.id', $category->getKey());
                 })
-                ->when($this->search, fn ($q) => $q->where('title', 'like', '%'.$this->search.'%'))
+                ->when($this->search, fn ($q) => $q->where('title', 'like', '%' . $this->search . '%'))
                 ->orderBy('sort_order')
                 ->get();
 
@@ -304,7 +301,7 @@ class Knowledge extends Component
                     ->whereHas('categories', function ($q) use ($child): void {
                         $q->where('categories.id', $child->getKey());
                     })
-                    ->when($this->search, fn ($q) => $q->where('title', 'like', '%'.$this->search.'%'))
+                    ->when($this->search, fn ($q) => $q->where('title', 'like', '%' . $this->search . '%'))
                     ->orderBy('sort_order')
                     ->get();
 
@@ -321,7 +318,7 @@ class Knowledge extends Component
             ->where('is_published', true)
             ->visibleToUser($user)
             ->whereDoesntHave('categories')
-            ->when($this->search, fn ($q) => $q->where('title', 'like', '%'.$this->search.'%'))
+            ->when($this->search, fn ($q) => $q->where('title', 'like', '%' . $this->search . '%'))
             ->orderBy('sort_order')
             ->get()
             ->toArray();
@@ -483,6 +480,27 @@ class Knowledge extends Component
     {
         $this->loadCategories();
         $this->loadPackageDocs();
+    }
+
+    protected function findFileInTree(array $tree, string $prefix): ?array
+    {
+        foreach ($tree as $item) {
+            if (($item['type'] ?? '') === 'file') {
+                $currentPrefix = explode('-', pathinfo($item['relative_path'], PATHINFO_FILENAME))[0];
+                if ($currentPrefix === $prefix) {
+                    return $item;
+                }
+            }
+
+            if (($item['type'] ?? '') === 'directory' && ! empty($item['children'])) {
+                $found = $this->findFileInTree($item['children'], $prefix);
+                if ($found) {
+                    return $found;
+                }
+            }
+        }
+
+        return null;
     }
 
     protected function filterDocsTree(array $items): array
