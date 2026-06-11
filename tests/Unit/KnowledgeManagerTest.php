@@ -200,3 +200,50 @@ test('returns null for non-registered package', function (): void {
 
     expect($manager->resolveLanguagePath('non-existent'))->toBeNull();
 });
+
+test('searchDocs finds files by content', function (): void {
+    $manager = new KnowledgeManager;
+    $manager->registerDocs(
+        package: 'test-package',
+        path: __DIR__.'/../fixtures/docs',
+        label: 'Test Docs',
+    );
+
+    $results = $manager->searchDocs('content here', null);
+
+    expect($results)->toHaveCount(1)
+        ->and($results[0]['type'])->toBe('doc')
+        ->and($results[0]['package'])->toBe('test-package')
+        ->and($results[0]['path'])->toBe('guides/advanced.md')
+        ->and($results[0]['title'])->toBe('Advanced')
+        ->and($results[0]['breadcrumb'])->toBe('Test Docs › Guides')
+        ->and($results[0]['snippet'])->toContain('<mark>content here</mark>');
+});
+
+test('searchDocs finds files by name with fallback snippet', function (): void {
+    $manager = new KnowledgeManager;
+    $manager->registerDocs(
+        package: 'test-package',
+        path: __DIR__.'/../fixtures/docs',
+        label: 'Test Docs',
+    );
+
+    $results = $manager->searchDocs('release notes', null);
+
+    expect($results)->toHaveCount(1)
+        ->and($results[0]['path'])->toBe('release-notes.md')
+        ->and($results[0]['snippet'])->not->toContain('<mark>')
+        ->and($results[0]['snippet'])->toContain('Version 1.0 shipped.');
+});
+
+test('searchDocs returns empty for invisible packages', function (): void {
+    $manager = new KnowledgeManager;
+    $manager->registerDocs(
+        package: 'test-package',
+        path: __DIR__.'/../fixtures/docs',
+        label: 'Test Docs',
+        roles: ['Some Role'],
+    );
+
+    expect($manager->searchDocs('content here', null))->toBeEmpty();
+});
