@@ -532,5 +532,4 @@ class Knowledge extends Component
 
         return null;
     }
-
 }
