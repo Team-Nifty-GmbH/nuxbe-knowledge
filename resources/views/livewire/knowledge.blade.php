@@ -351,7 +351,7 @@
             </div>
         @elseif ($selectedPackageDoc)
             {{-- Package Doc View --}}
-            <div x-data="{ lightboxSrc: null }">
+            <div>
                 <div class="mb-4 flex items-center justify-between">
                     <div class="flex items-center gap-2">
                         <x-button icon="arrow-left" color="gray" flat sm x-show="!isDesktop" x-on:click="sidebarOpen = true" />
@@ -372,7 +372,7 @@
                     class="prose max-w-none [&_img]:cursor-pointer [&_img]:rounded [&_img]:shadow-sm [&_img]:transition [&_img]:hover:opacity-80 [&_img]:hover:shadow-md dark:prose-invert"
                     x-on:click="
                         if ($event.target.tagName === 'IMG') {
-                            lightboxSrc = $event.target.src;
+                            $nuxbe.openLightbox($event.target.src);
                             return;
                         }
                         const link = $event.target.closest('a[data-doc-link]');
@@ -385,37 +385,6 @@
                     {!! $selectedPackageDoc['html'] !!}
                 </div>
 
-                {{-- Lightbox --}}
-                <div
-                    x-show="lightboxSrc"
-                    x-cloak
-                    x-on:keydown.escape.window="lightboxSrc = null"
-                    class="fixed inset-0 z-50 flex items-center justify-center p-8"
-                >
-                    <div
-                        x-show="lightboxSrc"
-                        x-transition:enter="transition ease-out duration-300"
-                        x-transition:enter-start="opacity-0"
-                        x-transition:enter-end="opacity-100"
-                        x-transition:leave="transition ease-in duration-200"
-                        x-transition:leave-start="opacity-100"
-                        x-transition:leave-end="opacity-0"
-                        x-on:click="lightboxSrc = null"
-                        class="absolute inset-0 bg-black/70 backdrop-blur-sm"
-                    ></div>
-                    <img
-                        x-bind:src="lightboxSrc"
-                        x-show="lightboxSrc"
-                        x-transition:enter="transition ease-out duration-300"
-                        x-transition:enter-start="scale-90 opacity-0"
-                        x-transition:enter-end="scale-100 opacity-100"
-                        x-transition:leave="transition ease-in duration-200"
-                        x-transition:leave-start="scale-100 opacity-100"
-                        x-transition:leave-end="scale-90 opacity-0"
-                        x-on:click.stop
-                        class="relative max-h-full max-w-full rounded-lg shadow-2xl"
-                    />
-                </div>
             </div>
         @else
             {{-- Empty State --}}
