@@ -293,7 +293,6 @@ class Knowledge extends Component
                 ->whereHas('categories', function ($q) use ($category): void {
                     $q->where('categories.id', $category->getKey());
                 })
-                ->when($this->search, fn ($q) => $q->where('title', 'like', '%'.$this->search.'%'))
                 ->orderBy('sort_order')
                 ->get();
 
@@ -304,7 +303,6 @@ class Knowledge extends Component
                     ->whereHas('categories', function ($q) use ($child): void {
                         $q->where('categories.id', $child->getKey());
                     })
-                    ->when($this->search, fn ($q) => $q->where('title', 'like', '%'.$this->search.'%'))
                     ->orderBy('sort_order')
                     ->get();
 
@@ -321,7 +319,6 @@ class Knowledge extends Component
             ->where('is_published', true)
             ->visibleToUser($user)
             ->whereDoesntHave('categories')
-            ->when($this->search, fn ($q) => $q->where('title', 'like', '%'.$this->search.'%'))
             ->orderBy('sort_order')
             ->get()
             ->toArray();
@@ -329,18 +326,7 @@ class Knowledge extends Component
 
     public function loadPackageDocs(): void
     {
-        $user = Auth::user();
-        $trees = app(KnowledgeManager::class)->getAllVisibleDocsTrees($user);
-
-        if ($this->search) {
-            $trees = array_filter(array_map(function (array $config): array {
-                $config['tree'] = $this->filterDocsTree($config['tree']);
-
-                return $config;
-            }, $trees), fn (array $config): bool => ! empty($config['tree']));
-        }
-
-        $this->packageDocs = $trees;
+        $this->packageDocs = app(KnowledgeManager::class)->getAllVisibleDocsTrees(Auth::user());
     }
 
     public function loadVersions(): void
@@ -547,26 +533,4 @@ class Knowledge extends Component
         return null;
     }
 
-    protected function filterDocsTree(array $items): array
-    {
-        $search = mb_strtolower($this->search);
-
-        return array_values(array_filter(array_map(function (array $item) use ($search): ?array {
-            if (($item['type'] ?? '') === 'directory') {
-                $item['children'] = $this->filterDocsTree($item['children'] ?? []);
-
-                if (! empty($item['children']) || str_contains(mb_strtolower($item['name']), $search)) {
-                    return $item;
-                }
-
-                return null;
-            }
-
-            if (str_contains(mb_strtolower($item['name']), $search)) {
-                return $item;
-            }
-
-            return null;
-        }, $items)));
-    }
 }
