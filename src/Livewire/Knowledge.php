@@ -19,6 +19,7 @@ use TeamNiftyGmbH\NuxbeKnowledge\Livewire\Forms\KnowledgeArticleForm;
 use TeamNiftyGmbH\NuxbeKnowledge\Models\KnowledgeArticle;
 use TeamNiftyGmbH\NuxbeKnowledge\Models\KnowledgeArticleVersion;
 use TeamNiftyGmbH\NuxbeKnowledge\Support\KnowledgeManager;
+use TeamNiftyGmbH\NuxbeKnowledge\Support\SearchSnippet;
 
 class Knowledge extends Component
 {
@@ -45,6 +46,8 @@ class Knowledge extends Component
     public array $packageDocs = [];
 
     public string $search = '';
+
+    public array $searchResults = [];
 
     public array $uncategorizedArticles = [];
 
@@ -478,8 +481,49 @@ class Knowledge extends Component
 
     public function updatedSearch(): void
     {
-        $this->loadCategories();
-        $this->loadPackageDocs();
+        if (mb_strlen($this->search) === 0) {
+            $this->searchResults = [];
+
+            return;
+        }
+
+        $this->searchResults = array_merge(
+            $this->searchArticles(),
+            app(KnowledgeManager::class)->searchDocs($this->search, Auth::user()),
+        );
+    }
+
+    protected function searchArticles(): array
+    {
+        $term = $this->search;
+
+        return resolve_static(KnowledgeArticle::class, 'query')
+            ->where('is_published', true)
+            ->visibleToUser(Auth::user())
+            ->where(function ($query) use ($term): void {
+                $query->where('title', 'like', '%'.$term.'%')
+                    ->orWhere('content', 'like', '%'.$term.'%')
+                    ->orWhereHas('attributeTranslations', function ($query) use ($term): void {
+                        $query->whereIn('attribute', ['title', 'content'])
+                            ->where('value', 'like', '%'.$term.'%');
+                    });
+            })
+            ->with('categories:id,name')
+            ->orderBy('sort_order')
+            ->get()
+            ->map(function (KnowledgeArticle $article) use ($term): array {
+                $plainText = strip_tags($article->content ?? '');
+
+                return [
+                    'type' => 'article',
+                    'id' => $article->getKey(),
+                    'title' => $article->title,
+                    'breadcrumb' => $article->categories->pluck('name')->implode(' › '),
+                    'snippet' => SearchSnippet::make($plainText, $term)
+                        ?? SearchSnippet::fallback($plainText),
+                ];
+            })
+            ->toArray();
     }
 
     protected function findFileInTree(array $tree, string $prefix): ?array
