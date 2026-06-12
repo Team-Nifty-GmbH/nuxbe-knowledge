@@ -146,6 +146,85 @@ class KnowledgeManager
         });
     }
 
+    public function searchDocs(string $term, ?Authenticatable $user): array
+    {
+        $results = [];
+
+        foreach ($this->getAllVisibleDocsTrees($user) as $package => $config) {
+            $this->searchDocsTree($package, $config['label'], $config['tree'], $term, [], $results);
+        }
+
+        return $results;
+    }
+
+    public function getDocPlainText(string $package, string $relativePath): ?string
+    {
+        $path = $this->resolveLanguagePath($package);
+
+        if (! $path) {
+            return null;
+        }
+
+        $fullPath = $path.'/'.ltrim($relativePath, '/');
+
+        if (! file_exists($fullPath) || ! str_ends_with($fullPath, '.md')) {
+            return null;
+        }
+
+        $languageCode = $this->resolveLanguageCode();
+        $cacheKey = "knowledge.docs.plain.{$package}.{$languageCode}.".md5($relativePath).'.'.filemtime($fullPath);
+
+        return Cache::remember($cacheKey, 3600, function () use ($fullPath): string {
+            $markdown = Blade::render(file_get_contents($fullPath));
+            $converter = new GithubFlavoredMarkdownConverter([
+                'html_input' => 'strip',
+                'allow_unsafe_links' => false,
+            ]);
+
+            return strip_tags($converter->convert($markdown)->getContent());
+        });
+    }
+
+    protected function searchDocsTree(
+        string $package,
+        string $label,
+        array $items,
+        string $term,
+        array $breadcrumb,
+        array &$results,
+    ): void {
+        foreach ($items as $item) {
+            if (($item['type'] ?? '') === 'directory') {
+                $this->searchDocsTree(
+                    $package,
+                    $label,
+                    $item['children'] ?? [],
+                    $term,
+                    array_merge($breadcrumb, [$item['name']]),
+                    $results,
+                );
+
+                continue;
+            }
+
+            $plainText = $this->getDocPlainText($package, $item['relative_path']) ?? '';
+            $snippet = SearchSnippet::make($plainText, $term);
+
+            if (is_null($snippet) && mb_stripos($item['name'], $term) === false) {
+                continue;
+            }
+
+            $results[] = [
+                'type' => 'doc',
+                'package' => $package,
+                'path' => $item['relative_path'],
+                'title' => $item['name'],
+                'breadcrumb' => implode(' › ', array_merge([$label], $breadcrumb)),
+                'snippet' => $snippet ?? SearchSnippet::fallback($plainText),
+            ];
+        }
+    }
+
     public function getAllDocsTrees(): array
     {
         $trees = [];

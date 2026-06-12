@@ -26,13 +26,41 @@
             <x-input wire:model.live.debounce.300ms="search" :placeholder="__('Search...')" icon="magnifying-glass" />
         </div>
 
+        @if (mb_strlen($search) > 0)
+            {{-- Search Results --}}
+            <div class="space-y-1">
+                <p class="px-2 text-xs text-gray-500 dark:text-gray-400">
+                    {{ count($searchResults) }} {{ __('Results') }}
+                </p>
+
+                @foreach ($searchResults as $result)
+                    <div
+                        wire:key="search-result-{{ $loop->index }}"
+                        class="cursor-pointer rounded px-2 py-1.5 hover:bg-gray-100 dark:hover:bg-gray-700"
+                        @if ($result['type'] === 'article')
+                            wire:click="selectArticle({{ $result['id'] }})"
+                        @else
+                            wire:click="selectPackageDoc('{{ $result['package'] }}', '{{ $result['path'] }}')"
+                        @endif
+                        x-on:click="sidebarOpen = false"
+                    >
+                        @if ($result['breadcrumb'])
+                            <p class="truncate text-xs text-gray-400 dark:text-gray-500">{{ $result['breadcrumb'] }}</p>
+                        @endif
+                        <p class="text-sm font-medium dark:text-gray-200">{{ $result['title'] }}</p>
+                        @if ($result['snippet'])
+                            <p class="text-xs text-gray-500 dark:text-gray-400 [&_mark]:rounded [&_mark]:bg-yellow-200 [&_mark]:px-0.5 dark:[&_mark]:bg-yellow-500/40 dark:[&_mark]:text-gray-100">
+                                {!! $result['snippet'] !!}
+                            </p>
+                        @endif
+                    </div>
+                @endforeach
+            </div>
+        @else
         {{-- User Categories --}}
         <div class="space-y-1">
             @foreach ($categories as $category)
-                <div
-                    x-data="{ open: @js(mb_strlen($search) > 0) || false }"
-                    x-init="$watch('$wire.search', value => { if (value.length > 0) open = true })"
-                >
+                <div x-data="{ open: false }">
                     <div class="flex cursor-pointer items-center gap-1 rounded px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-700" x-on:click="open = !open">
                         <x-icon name="chevron-right" class="h-4 w-4 transition-transform" x-bind:class="open && 'rotate-90'" />
                         <span class="flex-1 text-sm font-medium dark:text-gray-200">{{ $category['name'] }}</span>
@@ -50,10 +78,7 @@
 
                         {{-- Child Categories --}}
                         @foreach ($category['children'] ?? [] as $child)
-                            <div
-                                x-data="{ childOpen: @js(mb_strlen($search) > 0) || false }"
-                                x-init="$watch('$wire.search', value => { if (value.length > 0) childOpen = true })"
-                            >
+                            <div x-data="{ childOpen: false }">
                                 <div class="flex cursor-pointer items-center gap-1 rounded px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-700" x-on:click="childOpen = !childOpen">
                                     <x-icon name="chevron-right" class="h-3 w-3 transition-transform" x-bind:class="childOpen && 'rotate-90'" />
                                     <span class="flex-1 text-sm dark:text-gray-300">{{ $child['name'] }}</span>
@@ -94,8 +119,7 @@
         @foreach ($packageDocs as $package => $config)
             <div
                 class="mt-4 border-t pt-4 dark:border-gray-700"
-                x-data="{ open: @js(mb_strlen($search) > 0) }"
-                x-init="$watch('$wire.search', value => { if (value.length > 0) open = true })"
+                x-data="{ open: false }"
             >
                 <div class="flex cursor-pointer items-center gap-1 rounded px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-700" x-on:click="open = !open">
                     <x-icon name="chevron-right" class="h-4 w-4 transition-transform" x-bind:class="open && 'rotate-90'" />
@@ -111,11 +135,11 @@
                         :items="$config['tree']"
                         :package="$package"
                         :selectedPackageDoc="$selectedPackageDoc"
-                        :is-searching="mb_strlen($search) > 0"
                     />
                 </div>
             </div>
         @endforeach
+        @endif
     </div>
 
     {{-- Content Area --}}
@@ -327,7 +351,7 @@
             </div>
         @elseif ($selectedPackageDoc)
             {{-- Package Doc View --}}
-            <div x-data="{ lightboxSrc: null }">
+            <div>
                 <div class="mb-4 flex items-center justify-between">
                     <div class="flex items-center gap-2">
                         <x-button icon="arrow-left" color="gray" flat sm x-show="!isDesktop" x-on:click="sidebarOpen = true" />
@@ -348,7 +372,7 @@
                     class="prose max-w-none [&_img]:cursor-pointer [&_img]:rounded [&_img]:shadow-sm [&_img]:transition [&_img]:hover:opacity-80 [&_img]:hover:shadow-md dark:prose-invert"
                     x-on:click="
                         if ($event.target.tagName === 'IMG') {
-                            lightboxSrc = $event.target.src;
+                            $nuxbe.openLightbox($event.target.src);
                             return;
                         }
                         const link = $event.target.closest('a[data-doc-link]');
@@ -361,37 +385,6 @@
                     {!! $selectedPackageDoc['html'] !!}
                 </div>
 
-                {{-- Lightbox --}}
-                <div
-                    x-show="lightboxSrc"
-                    x-cloak
-                    x-on:keydown.escape.window="lightboxSrc = null"
-                    class="fixed inset-0 z-50 flex items-center justify-center p-8"
-                >
-                    <div
-                        x-show="lightboxSrc"
-                        x-transition:enter="transition ease-out duration-300"
-                        x-transition:enter-start="opacity-0"
-                        x-transition:enter-end="opacity-100"
-                        x-transition:leave="transition ease-in duration-200"
-                        x-transition:leave-start="opacity-100"
-                        x-transition:leave-end="opacity-0"
-                        x-on:click="lightboxSrc = null"
-                        class="absolute inset-0 bg-black/70 backdrop-blur-sm"
-                    ></div>
-                    <img
-                        x-bind:src="lightboxSrc"
-                        x-show="lightboxSrc"
-                        x-transition:enter="transition ease-out duration-300"
-                        x-transition:enter-start="scale-90 opacity-0"
-                        x-transition:enter-end="scale-100 opacity-100"
-                        x-transition:leave="transition ease-in duration-200"
-                        x-transition:leave-start="scale-100 opacity-100"
-                        x-transition:leave-end="scale-90 opacity-0"
-                        x-on:click.stop
-                        class="relative max-h-full max-w-full rounded-lg shadow-2xl"
-                    />
-                </div>
             </div>
         @else
             {{-- Empty State --}}
