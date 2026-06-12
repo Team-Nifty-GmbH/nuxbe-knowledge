@@ -435,6 +435,7 @@ class Knowledge extends Component
         $this->editing = false;
         $this->canEdit = $article->userCanEdit($user);
         $this->selectedPackageDoc = null;
+        $this->dispatch('knowledge-content-loaded');
     }
 
     public function selectPackageDoc(string $package, string $relativePath): void
@@ -463,6 +464,7 @@ class Knowledge extends Component
         $this->attachments->reset();
         $this->editing = false;
         $this->canEdit = false;
+        $this->dispatch('knowledge-content-loaded');
     }
 
     public function updatedSearch(): void

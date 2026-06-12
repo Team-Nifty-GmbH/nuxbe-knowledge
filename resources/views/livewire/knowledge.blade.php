@@ -7,6 +7,12 @@
         isDesktop: window.matchMedia('(min-width: 768px)').matches
     }"
     x-init="window.matchMedia('(min-width: 768px)').addEventListener('change', e => isDesktop = e.matches)"
+    x-on:knowledge-content-loaded.window="
+        $nextTick(() => {
+            const id = window.location.hash.slice(1);
+            if (id) document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+        })
+    "
 >
     {{-- Sidebar --}}
     <div
@@ -318,8 +324,18 @@
                     </div>
                 </div>
 
-                <div class="prose max-w-none dark:prose-invert">
-                    {!! $articleForm->content !!}
+                <div
+                    class="prose max-w-none dark:prose-invert [&_.heading-anchor]:ml-2 [&_.heading-anchor]:text-gray-400 [&_.heading-anchor]:no-underline [&_.heading-anchor]:opacity-0 [&_.heading-anchor]:transition-opacity [&_:is(h1,h2,h3,h4,h5,h6):hover_.heading-anchor]:opacity-100"
+                    x-on:click="
+                        const anchor = $event.target.closest('a[data-heading-anchor]');
+                        if (anchor) {
+                            $event.preventDefault();
+                            window.location.hash = anchor.getAttribute('href');
+                            navigator.clipboard?.writeText(window.location.href);
+                        }
+                    "
+                >
+                    {!! \TeamNiftyGmbH\NuxbeKnowledge\Support\HeadingAnchors::apply($articleForm->content ?? '') !!}
                 </div>
 
                 @if ($attachments->stagedFiles)
@@ -369,10 +385,17 @@
                     </div>
                 </div>
                 <div
-                    class="prose max-w-none [&_img]:cursor-pointer [&_img]:rounded [&_img]:shadow-sm [&_img]:transition [&_img]:hover:opacity-80 [&_img]:hover:shadow-md dark:prose-invert"
+                    class="prose max-w-none [&_img]:cursor-pointer [&_img]:rounded [&_img]:shadow-sm [&_img]:transition [&_img]:hover:opacity-80 [&_img]:hover:shadow-md dark:prose-invert [&_.heading-anchor]:ml-2 [&_.heading-anchor]:text-gray-400 [&_.heading-anchor]:no-underline [&_.heading-anchor]:opacity-0 [&_.heading-anchor]:transition-opacity [&_:is(h1,h2,h3,h4,h5,h6):hover_.heading-anchor]:opacity-100"
                     x-on:click="
                         if ($event.target.tagName === 'IMG') {
                             $nuxbe.openLightbox($event.target.src);
+                            return;
+                        }
+                        const anchor = $event.target.closest('a[data-heading-anchor]');
+                        if (anchor) {
+                            $event.preventDefault();
+                            window.location.hash = anchor.getAttribute('href');
+                            navigator.clipboard?.writeText(window.location.href);
                             return;
                         }
                         const link = $event.target.closest('a[data-doc-link]');

@@ -120,7 +120,7 @@ class KnowledgeManager
             );
 
             // Rewrite relative .md links to data attributes for Alpine handling
-            return preg_replace_callback(
+            $html = preg_replace_callback(
                 '/<a\s([^>]*)href=["\']([^"\']+\.md)(#[^"\']*)?["\']([^>]*)>/',
                 function (array $matches) use ($fullPath, $languagePath): string {
                     $href = $matches[2];
@@ -143,6 +143,8 @@ class KnowledgeManager
                 },
                 $html
             );
+
+            return HeadingAnchors::apply($html);
         });
     }
 
