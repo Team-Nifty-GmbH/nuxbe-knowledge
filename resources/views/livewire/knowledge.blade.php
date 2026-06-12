@@ -28,8 +28,18 @@
             </div>
         </div>
 
-        <div class="mb-4">
-            <x-input wire:model.live.debounce.300ms="search" :placeholder="__('Search...')" icon="magnifying-glass" />
+        <div class="mb-4 flex items-center gap-1">
+            <div class="flex-1">
+                <x-input wire:model.live.debounce.300ms="search" :placeholder="__('Search...')" icon="magnifying-glass" />
+            </div>
+            <x-button
+                icon="document-magnifying-glass"
+                color="gray"
+                flat
+                sm
+                :title="__('Search in content (Ctrl+K)')"
+                x-on:click="$tsui.open.commandPalette('knowledge-search')"
+            />
         </div>
 
         {{-- User Categories --}}
@@ -398,6 +408,20 @@
             </div>
         @endif
     </div>
+
+    {{-- Content Search Command Palette --}}
+    <x-command-palette
+        id="knowledge-search"
+        :request="route('knowledge.palette-search')"
+        select="label:label|value:value|description:description"
+        :placeholders="['search' => __('Search in articles and docs...')]"
+        x-on:select="
+            $event.detail.type === 'article'
+                ? $wire.selectArticle($event.detail.id)
+                : $wire.selectPackageDoc($event.detail.package, $event.detail.path);
+            sidebarOpen = false;
+        "
+    />
 
     {{-- Version History Modal --}}
     <x-modal id="version-history-modal" size="xl">
