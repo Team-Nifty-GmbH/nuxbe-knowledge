@@ -28,45 +28,27 @@
             </div>
         </div>
 
-        <div class="mb-4">
-            <x-input wire:model.live.debounce.300ms="search" :placeholder="__('Search...')" icon="magnifying-glass" />
+        <div class="mb-4 flex items-center gap-1">
+            <div class="flex-1">
+                <x-input wire:model.live.debounce.300ms="search" :placeholder="__('Search...')" icon="magnifying-glass" />
+            </div>
+            <x-button
+                icon="document-magnifying-glass"
+                color="gray"
+                flat
+                sm
+                :title="__('Search in content (Ctrl+K)')"
+                x-on:click="$tsui.open.commandPalette('knowledge-search')"
+            />
         </div>
 
-        @if (mb_strlen($search) > 0)
-            {{-- Search Results --}}
-            <div class="space-y-1">
-                <p class="px-2 text-xs text-gray-500 dark:text-gray-400">
-                    {{ count($searchResults) }} {{ __('Results') }}
-                </p>
-
-                @foreach ($searchResults as $result)
-                    <div
-                        wire:key="search-result-{{ $loop->index }}"
-                        class="cursor-pointer rounded px-2 py-1.5 hover:bg-gray-100 dark:hover:bg-gray-700"
-                        @if ($result['type'] === 'article')
-                            wire:click="selectArticle({{ $result['id'] }})"
-                        @else
-                            wire:click="selectPackageDoc('{{ $result['package'] }}', '{{ $result['path'] }}')"
-                        @endif
-                        x-on:click="sidebarOpen = false"
-                    >
-                        @if ($result['breadcrumb'])
-                            <p class="truncate text-xs text-gray-400 dark:text-gray-500">{{ $result['breadcrumb'] }}</p>
-                        @endif
-                        <p class="text-sm font-medium dark:text-gray-200">{{ $result['title'] }}</p>
-                        @if ($result['snippet'])
-                            <p class="text-xs text-gray-500 dark:text-gray-400 [&_mark]:rounded [&_mark]:bg-yellow-200 [&_mark]:px-0.5 dark:[&_mark]:bg-yellow-500/40 dark:[&_mark]:text-gray-100">
-                                {!! $result['snippet'] !!}
-                            </p>
-                        @endif
-                    </div>
-                @endforeach
-            </div>
-        @else
         {{-- User Categories --}}
         <div class="space-y-1">
             @foreach ($categories as $category)
-                <div x-data="{ open: false }">
+                <div
+                    x-data="{ open: @js(mb_strlen($search) > 0) || false }"
+                    x-init="$watch('$wire.search', value => { if (value.length > 0) open = true })"
+                >
                     <div class="flex cursor-pointer items-center gap-1 rounded px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-700" x-on:click="open = !open">
                         <x-icon name="chevron-right" class="h-4 w-4 transition-transform" x-bind:class="open && 'rotate-90'" />
                         <span class="flex-1 text-sm font-medium dark:text-gray-200">{{ $category['name'] }}</span>
@@ -84,7 +66,10 @@
 
                         {{-- Child Categories --}}
                         @foreach ($category['children'] ?? [] as $child)
-                            <div x-data="{ childOpen: false }">
+                            <div
+                                x-data="{ childOpen: @js(mb_strlen($search) > 0) || false }"
+                                x-init="$watch('$wire.search', value => { if (value.length > 0) childOpen = true })"
+                            >
                                 <div class="flex cursor-pointer items-center gap-1 rounded px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-700" x-on:click="childOpen = !childOpen">
                                     <x-icon name="chevron-right" class="h-3 w-3 transition-transform" x-bind:class="childOpen && 'rotate-90'" />
                                     <span class="flex-1 text-sm dark:text-gray-300">{{ $child['name'] }}</span>
@@ -125,7 +110,8 @@
         @foreach ($packageDocs as $package => $config)
             <div
                 class="mt-4 border-t pt-4 dark:border-gray-700"
-                x-data="{ open: false }"
+                x-data="{ open: @js(mb_strlen($search) > 0) }"
+                x-init="$watch('$wire.search', value => { if (value.length > 0) open = true })"
             >
                 <div class="flex cursor-pointer items-center gap-1 rounded px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-700" x-on:click="open = !open">
                     <x-icon name="chevron-right" class="h-4 w-4 transition-transform" x-bind:class="open && 'rotate-90'" />
@@ -141,11 +127,11 @@
                         :items="$config['tree']"
                         :package="$package"
                         :selectedPackageDoc="$selectedPackageDoc"
+                        :is-searching="mb_strlen($search) > 0"
                     />
                 </div>
             </div>
         @endforeach
-        @endif
     </div>
 
     {{-- Content Area --}}
@@ -422,6 +408,20 @@
             </div>
         @endif
     </div>
+
+    {{-- Content Search Command Palette --}}
+    <x-command-palette
+        id="knowledge-search"
+        :request="route('knowledge.palette-search')"
+        select="label:label|value:value|description:description"
+        :placeholders="['search' => __('Search in articles and docs...')]"
+        x-on:select="
+            $event.detail.type === 'article'
+                ? $wire.selectArticle($event.detail.id)
+                : $wire.selectPackageDoc($event.detail.package, $event.detail.path);
+            sidebarOpen = false;
+        "
+    />
 
     {{-- Version History Modal --}}
     <x-modal id="version-history-modal" size="xl">
