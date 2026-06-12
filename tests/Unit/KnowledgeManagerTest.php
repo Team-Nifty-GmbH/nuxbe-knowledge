@@ -201,6 +201,20 @@ test('returns null for non-registered package', function (): void {
     expect($manager->resolveLanguagePath('non-existent'))->toBeNull();
 });
 
+test('renderDoc adds heading anchors', function (): void {
+    $manager = new KnowledgeManager;
+    $manager->registerDocs(
+        package: 'test-package',
+        path: __DIR__.'/../fixtures/docs',
+        label: 'Test Docs',
+    );
+
+    $html = $manager->renderDoc('test-package', 'getting-started.md');
+
+    expect($html)->toContain('id="getting-started"')
+        ->toContain('<a href="#getting-started" class="heading-anchor" data-heading-anchor>#</a>');
+});
+
 test('searchDocs finds files by content', function (): void {
     $manager = new KnowledgeManager;
     $manager->registerDocs(
