@@ -3,7 +3,6 @@
 use FluxErp\Models\Language;
 use FluxErp\Models\User;
 use Livewire\Livewire;
-use Spatie\Permission\Models\Role;
 use TeamNiftyGmbH\NuxbeKnowledge\Livewire\Knowledge;
 use TeamNiftyGmbH\NuxbeKnowledge\Models\KnowledgeArticle;
 use TeamNiftyGmbH\NuxbeKnowledge\Support\KnowledgeManager;
@@ -15,107 +14,48 @@ beforeEach(function (): void {
     ]);
 });
 
-test('search matches article content and builds a marked snippet', function (): void {
-    KnowledgeArticle::factory()->create([
-        'title' => 'Dunning',
-        'content' => '<h2>Levels</h2><p>Overdue invoices are processed automatically.</p>',
-        'is_published' => true,
-    ]);
+test('sidebar search filters uncategorized articles by title', function (): void {
+    KnowledgeArticle::factory()->create(['title' => 'Dunning', 'is_published' => true]);
+    KnowledgeArticle::factory()->create(['title' => 'Payment Runs', 'is_published' => true]);
 
     $component = Livewire::actingAs($this->user)
         ->test(Knowledge::class)
-        ->set('search', 'overdue invoices');
+        ->set('search', 'dunning');
 
-    $results = $component->get('searchResults');
+    $titles = array_column($component->get('uncategorizedArticles'), 'title');
 
-    expect($results)->toHaveCount(1)
-        ->and($results[0]['type'])->toBe('article')
-        ->and($results[0]['title'])->toBe('Dunning')
-        ->and($results[0]['snippet'])->toContain('<mark>Overdue invoices</mark>')
-        ->and($results[0]['snippet'])->not->toContain('<p>');
+    expect($titles)->toBe(['Dunning']);
 });
 
-test('search matches article title with fallback snippet', function (): void {
-    KnowledgeArticle::factory()->create([
-        'title' => 'Payment Runs',
-        'content' => '<p>Some unrelated body text.</p>',
-        'is_published' => true,
-    ]);
-
-    $results = Livewire::actingAs($this->user)
-        ->test(Knowledge::class)
-        ->set('search', 'payment runs')
-        ->get('searchResults');
-
-    expect($results)->toHaveCount(1)
-        ->and($results[0]['snippet'])->toContain('Some unrelated body text.');
-});
-
-test('search excludes unpublished articles', function (): void {
-    KnowledgeArticle::factory()->create([
-        'title' => 'Draft',
-        'content' => '<p>secret draft content</p>',
-        'is_published' => false,
-    ]);
-
-    $results = Livewire::actingAs($this->user)
-        ->test(Knowledge::class)
-        ->set('search', 'secret draft')
-        ->get('searchResults');
-
-    expect($results)->toBeEmpty();
-});
-
-test('search excludes articles not visible to the user', function (): void {
-    $role = Role::create(['name' => 'Restricted Role', 'guard_name' => 'web']);
-
-    $article = KnowledgeArticle::factory()->create([
-        'title' => 'Restricted',
-        'content' => '<p>classified payload information</p>',
-        'is_published' => true,
-        'visibility_mode' => 'whitelist',
-    ]);
-    $article->roles()->attach($role->getKey(), ['permission_level' => 'read']);
-
-    $results = Livewire::actingAs($this->user)
-        ->test(Knowledge::class)
-        ->set('search', 'classified payload')
-        ->get('searchResults');
-
-    expect($results)->toBeEmpty();
-});
-
-test('search includes package doc results', function (): void {
+test('sidebar search filters package doc trees by file name', function (): void {
     app(KnowledgeManager::class)->registerDocs(
         package: 'test-package',
         path: __DIR__.'/../fixtures/docs',
         label: 'Test Docs',
     );
 
-    $results = Livewire::actingAs($this->user)
+    $component = Livewire::actingAs($this->user)
         ->test(Knowledge::class)
-        ->set('search', 'content here')
-        ->get('searchResults');
+        ->set('search', 'advanced');
 
-    expect($results)->toHaveCount(1)
-        ->and($results[0]['type'])->toBe('doc')
-        ->and($results[0]['path'])->toBe('guides/advanced.md');
+    $tree = $component->get('packageDocs')['test-package']['tree'] ?? [];
+    $names = collect($tree)->flatMap(function (array $item): array {
+        return ($item['type'] ?? '') === 'directory'
+            ? array_column($item['children'] ?? [], 'name')
+            : [$item['name']];
+    })->all();
+
+    expect($names)->toBe(['Advanced']);
 });
 
-test('clearing the search empties the results', function (): void {
-    KnowledgeArticle::factory()->create([
-        'title' => 'Dunning',
-        'content' => '<p>Overdue invoices.</p>',
-        'is_published' => true,
-    ]);
+test('clearing the sidebar search restores all entries', function (): void {
+    KnowledgeArticle::factory()->create(['title' => 'Dunning', 'is_published' => true]);
+    KnowledgeArticle::factory()->create(['title' => 'Payment Runs', 'is_published' => true]);
 
     $component = Livewire::actingAs($this->user)
         ->test(Knowledge::class)
-        ->set('search', 'overdue');
+        ->set('search', 'dunning')
+        ->set('search', '');
 
-    expect($component->get('searchResults'))->toHaveCount(1);
-
-    $component->set('search', '');
-
-    expect($component->get('searchResults'))->toBeEmpty();
+    expect($component->get('uncategorizedArticles'))->toHaveCount(2);
 });

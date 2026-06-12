@@ -2,6 +2,7 @@
     'items',
     'package',
     'selectedPackageDoc' => null,
+    'isSearching' => false,
 ])
 
 @foreach ($items as $item)
@@ -15,7 +16,12 @@
         </div>
     @elseif (($item['type'] ?? '') === 'directory')
         <div
-            x-data="{ subOpen: false }"
+            x-data="{ subOpen: @js($isSearching) }"
+            x-init="
+                $watch('isSearching', (value) => {
+                    if (value) subOpen = true
+                })
+            "
             class="w-full"
         >
             <div
@@ -41,6 +47,7 @@
                     :items="$item['children']"
                     :package="$package"
                     :selectedPackageDoc="$selectedPackageDoc"
+                    :is-searching="$isSearching"
                 />
             </div>
         </div>
