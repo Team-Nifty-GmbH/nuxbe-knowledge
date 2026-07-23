@@ -59,7 +59,7 @@ class KnowledgeArticle extends FluxModel implements HasMedia
         return [
             'id' => $this->getKey(),
             'title' => $this->title,
-            'content_markdown' => $this->content_markdown,
+            'content_markdown' => $this->content_markdown ?: trim(strip_tags((string) $this->content)),
             'is_published' => $this->is_published,
             'visibility_mode' => $this->visibility_mode,
         ];

@@ -26,3 +26,13 @@ test('the searchable array carries the title and the markdown body', function ()
         'visibility_mode' => 'public',
     ])->and($searchable)->toHaveKey('id');
 });
+
+test('the searchable text falls back to the stripped content when markdown is empty', function (): void {
+    $article = KnowledgeArticle::factory()->make([
+        'content' => '<p>Nur HTML, kein Markdown vorhanden.</p>',
+        'content_markdown' => null,
+    ]);
+
+    expect($article->toSearchableArray()['content_markdown'])
+        ->toBe('Nur HTML, kein Markdown vorhanden.');
+});
