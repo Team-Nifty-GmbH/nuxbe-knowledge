@@ -17,19 +17,14 @@ class KnowledgeSearch
 
     protected function searchArticles(string $term, ?Authenticatable $user): array
     {
-        return resolve_static(KnowledgeArticle::class, 'query')
-            ->where('is_published', true)
-            ->visibleToUser($user)
-            ->where(function ($query) use ($term): void {
-                $query->where('title', 'like', '%'.$term.'%')
-                    ->orWhere('content', 'like', '%'.$term.'%')
-                    ->orWhereHas('attributeTranslations', function ($query) use ($term): void {
-                        $query->whereIn('attribute', ['title', 'content'])
-                            ->where('value', 'like', '%'.$term.'%');
-                    });
-            })
-            ->with('categories:id,name')
-            ->orderBy('sort_order')
+        // Meilisearch ranks (keyword + semantic via SearchSettings); the query()
+        // callback enforces publish state and the ACL in SQL, so ranking can never
+        // widen what a user is allowed to see.
+        return resolve_static(KnowledgeArticle::class, 'search', [$term])
+            ->query(fn ($query) => $query
+                ->where('is_published', true)
+                ->visibleToUser($user)
+                ->with('categories:id,name'))
             ->get()
             ->map(function (KnowledgeArticle $article) use ($term): array {
                 $plainText = strip_tags($article->content ?? '');
