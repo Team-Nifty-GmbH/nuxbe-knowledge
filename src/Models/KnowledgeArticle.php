@@ -12,6 +12,7 @@ use FluxErp\Traits\Model\HasUserModification;
 use FluxErp\Traits\Model\HasUuid;
 use FluxErp\Traits\Model\InteractsWithMedia;
 use FluxErp\Traits\Model\SoftDeletes;
+use FluxErp\Traits\Scout\Searchable;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -24,12 +25,7 @@ use TeamNiftyGmbH\NuxbeKnowledge\Database\Factories\KnowledgeArticleFactory;
 
 class KnowledgeArticle extends FluxModel implements HasMedia
 {
-    use Categorizable, HasAttributeTranslations, HasPackageFactory, HasUserModification, HasUuid, InteractsWithMedia, SoftDeletes;
-
-    protected function translatableAttributes(): array
-    {
-        return ['title', 'content', 'content_markdown'];
-    }
+    use Categorizable, HasAttributeTranslations, HasPackageFactory, HasUserModification, HasUuid, InteractsWithMedia, Searchable, SoftDeletes;
 
     protected static function booted(): void
     {
@@ -50,6 +46,22 @@ class KnowledgeArticle extends FluxModel implements HasMedia
         return [
             'is_locked' => 'boolean',
             'is_published' => 'boolean',
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function toSearchableArray(): array
+    {
+        // content_markdown is the plain-text copy derived on save; the HTML content
+        // is deliberately not indexed, and it is what the embedder receives.
+        return [
+            'id' => $this->getKey(),
+            'title' => $this->title,
+            'content_markdown' => $this->content_markdown,
+            'is_published' => $this->is_published,
+            'visibility_mode' => $this->visibility_mode,
         ];
     }
 
@@ -300,5 +312,10 @@ class KnowledgeArticle extends FluxModel implements HasMedia
         }
 
         return false;
+    }
+
+    protected function translatableAttributes(): array
+    {
+        return ['title', 'content', 'content_markdown'];
     }
 }
