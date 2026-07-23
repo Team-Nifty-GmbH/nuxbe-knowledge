@@ -54,8 +54,9 @@ class KnowledgeArticle extends FluxModel implements HasMedia
      */
     public function toSearchableArray(): array
     {
-        // content_markdown is the plain-text copy derived on save; the HTML content
-        // is deliberately not indexed, and it is what the embedder receives.
+        // The indexed text is the markdown copy derived on save, or the stripped
+        // HTML content when that copy is missing. This plain text is what both the
+        // keyword index and the embedder receive; the raw HTML is never indexed.
         return [
             'id' => $this->getKey(),
             'title' => $this->title,
