@@ -1,7 +1,7 @@
 <?php
 
 test('the package does not depend on flux-ai', function (): void {
-    $composer = json_decode(file_get_contents(__DIR__ . '/../../composer.json'), true);
+    $composer = json_decode(file_get_contents(__DIR__.'/../../composer.json'), true);
 
     $requires = array_merge(
         array_keys($composer['require'] ?? []),
