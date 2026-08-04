@@ -66,6 +66,9 @@
                                 class="cursor-pointer rounded px-2 py-1 text-sm hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 {{ $selectedArticleId === $article['id'] ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-400' : '' }}"
                                 wire:click="selectArticle({{ $article['id'] }})" x-on:click="sidebarOpen = false"
                             >
+                                @unless ($article['is_published'] ?? true)
+                                    <x-badge flat light color="amber" xs :text="__('Draft')" />
+                                @endunless
                                 {{ $article['title'] }}
                             </div>
                         @endforeach
@@ -106,6 +109,9 @@
                         class="cursor-pointer rounded px-2 py-1 text-sm hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 {{ $selectedArticleId === $article['id'] ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-400' : '' }}"
                         wire:click="selectArticle({{ $article['id'] }})"
                     >
+                        @unless ($article['is_published'] ?? true)
+                            <x-badge flat light color="amber" xs :text="__('Draft')" />
+                        @endunless
                         {{ $article['title'] }}
                     </div>
                 @endforeach
