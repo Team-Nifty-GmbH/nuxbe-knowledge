@@ -299,6 +299,7 @@ class Knowledge extends Component
                     $q->where('categories.id', $category->getKey());
                 })
                 ->when($this->search, fn ($q) => $q->where('title', 'like', '%'.$this->search.'%'))
+                ->select(['id', 'title', 'is_published', 'sort_order'])
                 ->orderBy('sort_order')
                 ->get();
 
@@ -310,6 +311,7 @@ class Knowledge extends Component
                         $q->where('categories.id', $child->getKey());
                     })
                     ->when($this->search, fn ($q) => $q->where('title', 'like', '%'.$this->search.'%'))
+                    ->select(['id', 'title', 'is_published', 'sort_order'])
                     ->orderBy('sort_order')
                     ->get();
 
@@ -327,6 +329,7 @@ class Knowledge extends Component
             ->visibleToUser($user)
             ->whereDoesntHave('categories')
             ->when($this->search, fn ($q) => $q->where('title', 'like', '%'.$this->search.'%'))
+            ->select(['id', 'title', 'is_published', 'sort_order'])
             ->orderBy('sort_order')
             ->get()
             ->toArray();
