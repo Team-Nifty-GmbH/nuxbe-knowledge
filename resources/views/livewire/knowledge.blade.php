@@ -42,6 +42,12 @@
             />
         </div>
 
+        @if ($canManageDrafts)
+            <div class="mb-3">
+                <x-toggle wire:model.live="showDrafts" sm :label="__('Show drafts')" />
+            </div>
+        @endif
+
         {{-- User Categories --}}
         <div class="space-y-1">
             @foreach ($categories as $category)

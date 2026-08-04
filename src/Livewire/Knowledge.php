@@ -15,6 +15,7 @@ use Illuminate\View\View;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use TeamNiftyGmbH\NuxbeKnowledge\Actions\KnowledgeArticle\DeleteKnowledgeArticle;
+use TeamNiftyGmbH\NuxbeKnowledge\Actions\KnowledgeArticle\UpdateKnowledgeArticle;
 use TeamNiftyGmbH\NuxbeKnowledge\Livewire\Forms\KnowledgeArticleForm;
 use TeamNiftyGmbH\NuxbeKnowledge\Models\KnowledgeArticle;
 use TeamNiftyGmbH\NuxbeKnowledge\Models\KnowledgeArticleVersion;
@@ -29,6 +30,11 @@ class Knowledge extends Component
     public MediaUploadForm $attachments;
 
     public bool $canEdit = false;
+
+    /** Lets an editor reveal unpublished drafts in the tree for review. */
+    public bool $showDrafts = false;
+
+    public bool $canManageDrafts = false;
 
     public array $categories = [];
 
@@ -73,6 +79,8 @@ class Knowledge extends Component
     {
         $this->languageId = Session::get('selectedLanguageId')
             ?? resolve_static(Language::class, 'default')?->getKey();
+
+        $this->canManageDrafts = UpdateKnowledgeArticle::canPerformAction(false);
 
         $this->loadCategories();
         $this->loadPackageDocs();
@@ -285,7 +293,7 @@ class Knowledge extends Component
 
         $this->categories = $query->get()->map(function ($category) use ($user) {
             $articles = resolve_static(KnowledgeArticle::class, 'query')
-                ->where('is_published', true)
+                ->when(! ($this->showDrafts && $this->canManageDrafts), fn ($q) => $q->where('is_published', true))
                 ->visibleToUser($user)
                 ->whereHas('categories', function ($q) use ($category): void {
                     $q->where('categories.id', $category->getKey());
@@ -296,7 +304,7 @@ class Knowledge extends Component
 
             $children = $category->children->map(function ($child) use ($user) {
                 $childArticles = resolve_static(KnowledgeArticle::class, 'query')
-                    ->where('is_published', true)
+                    ->when(! ($this->showDrafts && $this->canManageDrafts), fn ($q) => $q->where('is_published', true))
                     ->visibleToUser($user)
                     ->whereHas('categories', function ($q) use ($child): void {
                         $q->where('categories.id', $child->getKey());
@@ -315,7 +323,7 @@ class Knowledge extends Component
         })->toArray();
 
         $this->uncategorizedArticles = resolve_static(KnowledgeArticle::class, 'query')
-            ->where('is_published', true)
+            ->when(! ($this->showDrafts && $this->canManageDrafts), fn ($q) => $q->where('is_published', true))
             ->visibleToUser($user)
             ->whereDoesntHave('categories')
             ->when($this->search, fn ($q) => $q->where('title', 'like', '%'.$this->search.'%'))
@@ -482,6 +490,11 @@ class Knowledge extends Component
     {
         $this->loadCategories();
         $this->loadPackageDocs();
+    }
+
+    public function updatedShowDrafts(): void
+    {
+        $this->loadCategories();
     }
 
     protected function findFileInTree(array $tree, string $prefix): ?array
