@@ -5,6 +5,7 @@ namespace TeamNiftyGmbH\NuxbeKnowledge\Models;
 use FluxErp\Models\FluxModel;
 use FluxErp\Models\Role;
 use FluxErp\Models\User;
+use FluxErp\Settings\SearchSettings;
 use FluxErp\Traits\Model\Categorizable;
 use FluxErp\Traits\Model\HasAttributeTranslations;
 use FluxErp\Traits\Model\HasPackageFactory;
@@ -25,7 +26,10 @@ use TeamNiftyGmbH\NuxbeKnowledge\Database\Factories\KnowledgeArticleFactory;
 
 class KnowledgeArticle extends FluxModel implements HasMedia
 {
-    use Categorizable, HasAttributeTranslations, HasPackageFactory, HasUserModification, HasUuid, InteractsWithMedia, Searchable, SoftDeletes;
+    use Categorizable, HasAttributeTranslations, HasPackageFactory, HasUserModification, HasUuid, InteractsWithMedia, SoftDeletes;
+    use Searchable {
+        embedderDefinition as protected baseEmbedderDefinition;
+    }
 
     protected static function booted(): void
     {
@@ -318,5 +322,13 @@ class KnowledgeArticle extends FluxModel implements HasMedia
     protected function translatableAttributes(): array
     {
         return ['title', 'content', 'content_markdown'];
+    }
+
+    protected static function embedderDefinition(SearchSettings $search): array
+    {
+        return array_merge(static::baseEmbedderDefinition($search), [
+            'documentTemplate' => '{{doc.title}}: {{doc.content_markdown}}',
+            'documentTemplateMaxBytes' => 20000,
+        ]);
     }
 }
