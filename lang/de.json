@@ -60,5 +60,9 @@
     "User": "Benutzer",
     "Only users with the assigned roles or directly assigned users can see this article.": "Nur Benutzer mit den zugewiesenen Rollen oder direkt zugewiesene Benutzer können diesen Artikel sehen.",
     "All users except those with the assigned roles or directly assigned users can see this article.": "Alle Benutzer außer denen mit den zugewiesenen Rollen oder direkt zugewiesenen Benutzern können diesen Artikel sehen.",
-    "Package Settings": "Paket-Einstellungen"
+    "Package Settings": "Paket-Einstellungen",
+    "Upload Scan": "Scan hochladen",
+    "Uploading...": "Wird hochgeladen...",
+    "Error": "Fehler",
+    "Scan upload failed.": "Scan-Upload fehlgeschlagen."
 }

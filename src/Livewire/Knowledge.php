@@ -50,6 +50,8 @@ class Knowledge extends Component
 
     public array $packageDocs = [];
 
+    public $scanUpload = null;
+
     public string $search = '';
 
     public array $uncategorizedArticles = [];
@@ -385,6 +387,28 @@ class Knowledge extends Component
         $this->editorImage = null;
 
         return $media->getUrl();
+    }
+
+    public function uploadScan(): void
+    {
+        $this->validate(['scanUpload' => 'required|file|mimetypes:application/pdf,image/*|max:51200']);
+
+        if (! $this->articleForm->id) {
+            return;
+        }
+
+        $article = resolve_static(KnowledgeArticle::class, 'query')
+            ->whereKey($this->articleForm->id)->first();
+
+        if (! $article) {
+            return;
+        }
+
+        $article->addMedia($this->scanUpload->getRealPath())
+            ->usingFileName($this->scanUpload->getClientOriginalName())
+            ->toMediaCollection('scans');
+
+        $this->reset('scanUpload');
     }
 
     public function newArticle(?int $categoryId = null): void

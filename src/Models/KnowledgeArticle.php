@@ -80,6 +80,12 @@ class KnowledgeArticle extends FluxModel implements HasMedia
 
         $this->addMediaCollection('attachments')
             ->useDisk('public');
+
+        $this->addMediaCollection('scans')
+            ->acceptsFile(function (File $file): bool {
+                return $file->mimeType === 'application/pdf'
+                    || str_starts_with($file->mimeType, 'image/');
+            });
     }
 
     public function roles(): BelongsToMany
