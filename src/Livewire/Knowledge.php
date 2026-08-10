@@ -394,6 +394,8 @@ class Knowledge extends Component
         $this->validate(['scanUpload' => 'required|file|mimetypes:application/pdf,image/*|max:51200']);
 
         if (! $this->articleForm->id) {
+            $this->reset('scanUpload');
+
             return;
         }
 
@@ -401,14 +403,24 @@ class Knowledge extends Component
             ->whereKey($this->articleForm->id)->first();
 
         if (! $article) {
+            $this->reset('scanUpload');
+
             return;
         }
 
-        $article->addMedia($this->scanUpload->getRealPath())
-            ->usingFileName($this->scanUpload->getClientOriginalName())
-            ->toMediaCollection('scans');
+        try {
+            if (! $article->userCanEdit(Auth::user())) {
+                throw new UnauthorizedException(__('You are not allowed to edit this article.'));
+            }
 
-        $this->reset('scanUpload');
+            $article->addMedia($this->scanUpload->getRealPath())
+                ->usingFileName($this->scanUpload->getClientOriginalName())
+                ->toMediaCollection('scans');
+        } catch (UnauthorizedException $e) {
+            exception_to_notifications($e, $this);
+        } finally {
+            $this->reset('scanUpload');
+        }
     }
 
     public function newArticle(?int $categoryId = null): void
