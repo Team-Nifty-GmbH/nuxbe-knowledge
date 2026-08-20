@@ -51,53 +51,10 @@
         {{-- User Categories --}}
         <div class="space-y-1">
             @foreach ($categories as $category)
-                <div
-                    x-data="{ open: @js(mb_strlen($search) > 0) || false }"
-                    x-init="$watch('$wire.search', value => { if (value.length > 0) open = true })"
-                >
-                    <div class="flex cursor-pointer items-center gap-1 rounded px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-700" x-on:click="open = !open">
-                        <x-icon name="chevron-right" class="h-4 w-4 transition-transform" x-bind:class="open && 'rotate-90'" />
-                        <span class="flex-1 text-sm font-medium dark:text-gray-200">{{ $category['name'] }}</span>
-                        <x-button icon="plus" color="gray" flat xs wire:click.stop="newArticle({{ $category['id'] }})" x-on:click="sidebarOpen = false" />
-                    </div>
-                    <div x-show="open" x-cloak class="ml-5 space-y-0.5">
-                        @foreach ($category['articles'] ?? [] as $article)
-                            <div
-                                class="cursor-pointer rounded px-2 py-1 text-sm hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 {{ $selectedArticleId === $article['id'] ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-400' : '' }}"
-                                wire:click="selectArticle({{ $article['id'] }})" x-on:click="sidebarOpen = false"
-                            >
-                                @unless ($article['is_published'] ?? true)
-                                    <x-badge flat light color="amber" xs :text="__('Draft')" />
-                                @endunless
-                                {{ $article['title'] }}
-                            </div>
-                        @endforeach
-
-                        {{-- Child Categories --}}
-                        @foreach ($category['children'] ?? [] as $child)
-                            <div
-                                x-data="{ childOpen: @js(mb_strlen($search) > 0) || false }"
-                                x-init="$watch('$wire.search', value => { if (value.length > 0) childOpen = true })"
-                            >
-                                <div class="flex cursor-pointer items-center gap-1 rounded px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-700" x-on:click="childOpen = !childOpen">
-                                    <x-icon name="chevron-right" class="h-3 w-3 transition-transform" x-bind:class="childOpen && 'rotate-90'" />
-                                    <span class="flex-1 text-sm dark:text-gray-300">{{ $child['name'] }}</span>
-                                    <x-button icon="plus" color="gray" flat xs wire:click.stop="newArticle({{ $child['id'] }})" x-on:click="sidebarOpen = false" />
-                                </div>
-                                <div x-show="childOpen" x-cloak class="ml-4 space-y-0.5">
-                                    @foreach ($child['articles'] ?? [] as $childArticle)
-                                        <div
-                                            class="cursor-pointer rounded px-2 py-1 text-sm hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 {{ $selectedArticleId === $childArticle['id'] ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-400' : '' }}"
-                                            wire:click="selectArticle({{ $childArticle['id'] }})" x-on:click="sidebarOpen = false"
-                                        >
-                                            {{ $childArticle['title'] }}
-                                        </div>
-                                    @endforeach
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
+                @include('nuxbe-knowledge::livewire.partials.category-node', [
+                    'category' => $category,
+                    'depth' => 0,
+                ])
             @endforeach
         </div>
 
