@@ -7,6 +7,8 @@ use FluxErp\Models\Category;
 use FluxErp\Models\Language;
 use FluxErp\Traits\Livewire\Actions;
 use FluxErp\Traits\Livewire\WithFileUploads;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\UnauthorizedException;
@@ -284,47 +286,30 @@ class Knowledge extends Component
         $user = Auth::user();
         $morphAlias = morph_alias(KnowledgeArticle::class);
 
-        $query = resolve_static(Category::class, 'query')
+        $categories = resolve_static(Category::class, 'query')
             ->where('model_type', $morphAlias)
             ->where('is_active', true)
-            ->whereNull('parent_id')
-            ->with(['children' => function ($q) use ($morphAlias): void {
-                $q->where('model_type', $morphAlias)->where('is_active', true);
-            }])
-            ->orderBy('sort_number');
+            ->orderBy('sort_number')
+            ->get();
 
-        $this->categories = $query->get()->map(function ($category) use ($user) {
-            $articles = resolve_static(KnowledgeArticle::class, 'query')
-                ->when(! ($this->showDrafts && $this->canManageDrafts), fn ($q) => $q->where('is_published', true))
-                ->visibleToUser($user)
-                ->whereHas('categories', function ($q) use ($category): void {
-                    $q->where('categories.id', $category->getKey());
-                })
-                ->when($this->search, fn ($q) => $q->where('title', 'like', '%'.$this->search.'%'))
-                ->select(['id', 'title', 'is_published', 'sort_order'])
-                ->orderBy('sort_order')
-                ->get();
+        $articles = resolve_static(KnowledgeArticle::class, 'query')
+            ->when(! ($this->showDrafts && $this->canManageDrafts), fn ($q) => $q->where('is_published', true))
+            ->visibleToUser($user)
+            ->whereHas('categories')
+            ->when($this->search, fn ($q) => $q->where('title', 'like', '%'.$this->search.'%'))
+            ->with('categories:id')
+            ->select(['id', 'title', 'is_published', 'sort_order'])
+            ->orderBy('sort_order')
+            ->get();
 
-            $children = $category->children->map(function ($child) use ($user) {
-                $childArticles = resolve_static(KnowledgeArticle::class, 'query')
-                    ->when(! ($this->showDrafts && $this->canManageDrafts), fn ($q) => $q->where('is_published', true))
-                    ->visibleToUser($user)
-                    ->whereHas('categories', function ($q) use ($child): void {
-                        $q->where('categories.id', $child->getKey());
-                    })
-                    ->when($this->search, fn ($q) => $q->where('title', 'like', '%'.$this->search.'%'))
-                    ->select(['id', 'title', 'is_published', 'sort_order'])
-                    ->orderBy('sort_order')
-                    ->get();
+        $articlesByCategory = [];
+        foreach ($articles as $article) {
+            foreach ($article->categories as $category) {
+                $articlesByCategory[$category->getKey()][] = Arr::except($article->toArray(), 'categories');
+            }
+        }
 
-                return array_merge($child->toArray(), ['articles' => $childArticles->toArray()]);
-            });
-
-            return array_merge($category->toArray(), [
-                'articles' => $articles->toArray(),
-                'children' => $children->toArray(),
-            ]);
-        })->toArray();
+        $this->categories = $this->buildCategoryTree($categories, null, $articlesByCategory);
 
         $this->uncategorizedArticles = resolve_static(KnowledgeArticle::class, 'query')
             ->when(! ($this->showDrafts && $this->canManageDrafts), fn ($q) => $q->where('is_published', true))
@@ -334,6 +319,26 @@ class Knowledge extends Component
             ->select(['id', 'title', 'is_published', 'sort_order'])
             ->orderBy('sort_order')
             ->get()
+            ->toArray();
+    }
+
+    /**
+     * @param  Collection<int, Category>  $categories
+     * @param  array<int, array<int, array<string, mixed>>>  $articlesByCategory
+     * @return array<int, array<string, mixed>>
+     */
+    protected function buildCategoryTree(
+        Collection $categories,
+        ?int $parentId,
+        array $articlesByCategory
+    ): array {
+        return $categories
+            ->where('parent_id', $parentId)
+            ->map(fn (Category $category): array => array_merge($category->toArray(), [
+                'articles' => $articlesByCategory[$category->getKey()] ?? [],
+                'children' => $this->buildCategoryTree($categories, $category->getKey(), $articlesByCategory),
+            ]))
+            ->values()
             ->toArray();
     }
 
