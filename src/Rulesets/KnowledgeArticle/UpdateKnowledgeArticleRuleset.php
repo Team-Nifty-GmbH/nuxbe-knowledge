@@ -45,6 +45,17 @@ class UpdateKnowledgeArticleRuleset extends FluxRuleset
                 'nullable',
                 'boolean',
             ],
+            'source_type' => [
+                'nullable',
+                'required_with:source_id',
+                'string',
+                'max:255',
+            ],
+            'source_id' => [
+                'nullable',
+                'required_with:source_type',
+                'integer',
+            ],
             'change_summary' => [
                 'nullable',
                 'string',
