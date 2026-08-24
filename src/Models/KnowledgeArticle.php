@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Str;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\MediaCollections\File;
@@ -95,6 +96,15 @@ class KnowledgeArticle extends FluxModel implements HasMedia
     public function versions(): HasMany
     {
         return $this->hasMany(KnowledgeArticleVersion::class)->orderByDesc('version_number');
+    }
+
+    /**
+     * What this article was condensed from, when it was not written by hand -- a
+     * closed ticket or order. Polymorphic because condensation feeds on both.
+     */
+    public function source(): MorphTo
+    {
+        return $this->morphTo();
     }
 
     public function scopeVisibleToUser(Builder $query, ?Authenticatable $user): Builder

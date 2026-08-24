@@ -2,6 +2,7 @@
 
 namespace TeamNiftyGmbH\NuxbeKnowledge;
 
+use FluxErp\Facades\Action;
 use FluxErp\Facades\Editor;
 use FluxErp\Facades\Menu;
 use FluxErp\Models\Category;
@@ -10,7 +11,9 @@ use FluxErp\Models\User;
 use FluxErp\View\Components\EditorButtons\ImageUpload;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Mcp\Facades\Mcp;
 use Livewire\Livewire;
+use TeamNiftyGmbH\NuxbeKnowledge\Console\Commands\BackfillKnowledgeArticleSources;
 use TeamNiftyGmbH\NuxbeKnowledge\Livewire\Knowledge;
 use TeamNiftyGmbH\NuxbeKnowledge\Models\KnowledgeArticle;
 use TeamNiftyGmbH\NuxbeKnowledge\Models\KnowledgeArticleVersion;
@@ -25,7 +28,10 @@ class NuxbeKnowledgeServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->registerMorphMap();
+        $this->registerActions();
         $this->registerRoutes();
+        $this->registerMcp();
+        $this->registerCommands();
         $this->registerMigrations();
         $this->registerMenu();
         $this->registerLivewireComponents();
@@ -38,6 +44,43 @@ class NuxbeKnowledgeServiceProvider extends ServiceProvider
     {
         $this->app->singleton(KnowledgeManager::class);
         $this->registerTranslationsAndViews();
+    }
+
+    protected function registerActions(): void
+    {
+        Action::autoDiscover(__DIR__.'/Actions', __NAMESPACE__.'\\Actions');
+    }
+
+    protected function registerCommands(): void
+    {
+        if ($this->app->runningInConsole()) {
+            $this->commands([BackfillKnowledgeArticleSources::class]);
+        }
+    }
+
+    /**
+     * The MCP server needs laravel/mcp, which this package does not require: it comes
+     * in with flux-ai wherever MCP is actually used. Without it there is simply no
+     * endpoint. The server listing is flux-ai's, so it is filled in only where that
+     * package is present.
+     */
+    protected function registerMcp(): void
+    {
+        if (! class_exists(Mcp::class)) {
+            return;
+        }
+
+        $this->loadRoutesFrom(__DIR__.'/../routes/mcp.php');
+
+        if (class_exists('FluxAi\\Mcp\\Servers\\FluxServer')) {
+            config([
+                'flux-ai.mcp.servers.tn_nuxbe_knowledge' => [
+                    'name' => 'nuxbe-knowledge',
+                    'path' => '/nuxbe-mcp/knowledge',
+                    'description' => 'Knowledge base (wiki) search and capture',
+                ],
+            ]);
+        }
     }
 
     protected function registerMenu(): void

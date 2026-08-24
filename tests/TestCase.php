@@ -8,6 +8,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Foundation\Testing\WithCachedConfig;
 use Illuminate\Foundation\Testing\WithCachedRoutes;
+use Laravel\Mcp\Server\McpServiceProvider;
 use Laravel\Scout\ScoutServiceProvider;
 use Livewire\LivewireServiceProvider;
 use NotificationChannels\WebPush\WebPushServiceProvider;
@@ -47,6 +48,7 @@ abstract class TestCase extends BaseTestCase
             FluxServiceProvider::class,
             WebPushServiceProvider::class,
             ServiceProvider::class,
+            McpServiceProvider::class,
             NuxbeKnowledgeServiceProvider::class,
         ];
     }
