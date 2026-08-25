@@ -28,6 +28,7 @@ class UpdateKnowledgeArticle extends FluxAction
             ->first();
 
         $changeSummary = Arr::pull($this->data, 'change_summary');
+        $categories = Arr::pull($this->data, 'categories');
         $roles = Arr::pull($this->data, 'roles');
         $users = Arr::pull($this->data, 'users');
         $visibilityMode = Arr::pull($this->data, 'visibility_mode');
@@ -44,6 +45,10 @@ class UpdateKnowledgeArticle extends FluxAction
         }
 
         $article->save();
+
+        if (is_array($categories)) {
+            $article->categories()->sync($categories);
+        }
 
         if (is_array($roles)) {
             $syncData = [];
