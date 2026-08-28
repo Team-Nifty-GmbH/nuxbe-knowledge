@@ -52,6 +52,8 @@ class Knowledge extends Component
 
     public array $packageDocs = [];
 
+    public $scanUpload = null;
+
     public string $search = '';
 
     public array $uncategorizedArticles = [];
@@ -390,6 +392,40 @@ class Knowledge extends Component
         $this->editorImage = null;
 
         return $media->getUrl();
+    }
+
+    public function uploadScan(): void
+    {
+        $this->validate(['scanUpload' => 'required|file|mimetypes:application/pdf,image/*|max:51200']);
+
+        if (! $this->articleForm->id) {
+            $this->reset('scanUpload');
+
+            return;
+        }
+
+        $article = resolve_static(KnowledgeArticle::class, 'query')
+            ->whereKey($this->articleForm->id)->first();
+
+        if (! $article) {
+            $this->reset('scanUpload');
+
+            return;
+        }
+
+        try {
+            if (! $article->userCanEdit(Auth::user())) {
+                throw new UnauthorizedException(__('You are not allowed to edit this article.'));
+            }
+
+            $article->addMedia($this->scanUpload->getRealPath())
+                ->usingFileName($this->scanUpload->getClientOriginalName())
+                ->toMediaCollection('scans');
+        } catch (UnauthorizedException $e) {
+            exception_to_notifications($e, $this);
+        } finally {
+            $this->reset('scanUpload');
+        }
     }
 
     public function newArticle(?int $categoryId = null): void
