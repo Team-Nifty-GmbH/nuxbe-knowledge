@@ -270,6 +270,22 @@
                             />
                         </div>
                         @if ($canEdit)
+                            <input
+                                type="file"
+                                x-ref="scanUploadInput"
+                                class="hidden"
+                                accept="application/pdf,image/*"
+                                x-on:change="
+                                    const file = $event.target.files[0];
+                                    if (!file) return;
+                                    $wire.upload('scanUpload', file, () => { $wire.uploadScan(); }, () => {
+                                        $tsui.interaction('toast').error('{{ __('Error') }}', '{{ __('Scan upload failed.') }}').send();
+                                    });
+                                    $event.target.value = '';
+                                "
+                            />
+                            <x-button :text="__('Upload Scan')" icon="document-arrow-up" color="gray" flat x-on:click="$refs.scanUploadInput.click()" />
+                            <span wire:loading wire:target="scanUpload,uploadScan" class="text-xs text-gray-400 dark:text-gray-500">{{ __('Uploading...') }}</span>
                             <x-button :text="__('Edit')" icon="pencil" color="primary" flat wire:click="editArticle" />
                             <x-button :text="__('Version History')" icon="clock" color="gray" flat x-on:click="$tsui.open.modal('version-history-modal'); $wire.loadVersions()" />
                             <x-button :text="__('Delete')" icon="trash" color="red" flat wire:flux-confirm.type.error="{{ __('wire:confirm.delete', ['model' => __('Article')]) }}" wire:click="deleteArticle" />

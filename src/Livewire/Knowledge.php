@@ -2,6 +2,7 @@
 
 namespace TeamNiftyGmbH\NuxbeKnowledge\Livewire;
 
+use FluxErp\Actions\Media\UploadMedia;
 use FluxErp\Livewire\Forms\MediaUploadForm;
 use FluxErp\Models\Category;
 use FluxErp\Models\Language;
@@ -16,6 +17,7 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Livewire\Attributes\Url;
 use Livewire\Component;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use TeamNiftyGmbH\NuxbeKnowledge\Actions\KnowledgeArticle\DeleteKnowledgeArticle;
 use TeamNiftyGmbH\NuxbeKnowledge\Actions\KnowledgeArticle\UpdateKnowledgeArticle;
 use TeamNiftyGmbH\NuxbeKnowledge\Livewire\Forms\KnowledgeArticleForm;
@@ -44,13 +46,15 @@ class Knowledge extends Component
 
     public ?string $diffHtml = null;
 
-    public $editorImage;
+    public ?TemporaryUploadedFile $editorImage = null;
 
     public bool $editing = false;
 
     public ?int $languageId = null;
 
     public array $packageDocs = [];
+
+    public ?TemporaryUploadedFile $scanUpload = null;
 
     public string $search = '';
 
@@ -384,12 +388,73 @@ class Knowledge extends Component
             return null;
         }
 
-        $media = $article->addMedia($this->editorImage->getRealPath())
-            ->toMediaCollection('editor-images');
+        try {
+            if (! $article->userCanEdit(Auth::user())) {
+                throw new UnauthorizedException(__('You are not allowed to edit this article.'));
+            }
 
-        $this->editorImage = null;
+            $media = UploadMedia::make([
+                'model_type' => morph_alias(KnowledgeArticle::class),
+                'model_id' => $article->getKey(),
+                'collection_name' => 'editor-images',
+                'name' => pathinfo($this->editorImage->getClientOriginalName(), PATHINFO_FILENAME),
+                'file_name' => $this->editorImage->getClientOriginalName(),
+                'media' => $this->editorImage->getRealPath(),
+            ])
+                ->checkPermission()
+                ->validate()
+                ->execute();
+        } catch (UnauthorizedException|ValidationException $e) {
+            exception_to_notifications($e, $this);
+
+            return null;
+        } finally {
+            $this->editorImage = null;
+        }
 
         return $media->getUrl();
+    }
+
+    public function uploadScan(): void
+    {
+        $this->validate(['scanUpload' => 'required|file|mimetypes:application/pdf,image/*|max:51200']);
+
+        if (! $this->articleForm->id) {
+            $this->reset('scanUpload');
+
+            return;
+        }
+
+        $article = resolve_static(KnowledgeArticle::class, 'query')
+            ->whereKey($this->articleForm->id)->first();
+
+        if (! $article) {
+            $this->reset('scanUpload');
+
+            return;
+        }
+
+        try {
+            if (! $article->userCanEdit(Auth::user())) {
+                throw new UnauthorizedException(__('You are not allowed to edit this article.'));
+            }
+
+            UploadMedia::make([
+                'model_type' => morph_alias(KnowledgeArticle::class),
+                'model_id' => $article->getKey(),
+                'collection_name' => 'scans',
+                'name' => pathinfo($this->scanUpload->getClientOriginalName(), PATHINFO_FILENAME),
+                'file_name' => $this->scanUpload->getClientOriginalName(),
+                'media' => $this->scanUpload->getRealPath(),
+            ])
+                ->checkPermission()
+                ->validate()
+                ->execute();
+        } catch (UnauthorizedException|ValidationException $e) {
+            exception_to_notifications($e, $this);
+        } finally {
+            $this->reset('scanUpload');
+        }
     }
 
     public function newArticle(?int $categoryId = null): void
