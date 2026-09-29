@@ -195,6 +195,26 @@ test('renders blade directives in markdown docs', function (): void {
         ->not->toContain('{{');
 });
 
+test('leaves blade inside code blocks untouched', function (): void {
+    app()->setLocale('de');
+
+    $manager = new KnowledgeManager;
+
+    $manager->registerDocs(
+        package: 'test-package',
+        path: __DIR__.'/../fixtures/docs',
+        label: 'Test Docs',
+    );
+
+    $html = $manager->renderDoc('test-package', 'blade-code-block-test.md');
+
+    expect($html)
+        ->toContain('Current locale: de')
+        ->toContain('{{ $order-&gt;order_number }}')
+        ->toContain('$order-&gt;getKey()')
+        ->toContain('@if ($order-&gt;is_locked)');
+});
+
 test('returns null for non-registered package', function (): void {
     $manager = new KnowledgeManager;
 

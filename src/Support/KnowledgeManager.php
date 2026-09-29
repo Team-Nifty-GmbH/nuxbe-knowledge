@@ -84,7 +84,7 @@ class KnowledgeManager
         $cacheKey = "knowledge.docs.rendered.{$package}.{$languageCode}.".md5($relativePath).'.'.filemtime($fullPath);
 
         return Cache::remember($cacheKey, 3600, function () use ($fullPath, $package): string {
-            $markdown = Blade::render(file_get_contents($fullPath));
+            $markdown = $this->renderBlade(file_get_contents($fullPath));
             $converter = new GithubFlavoredMarkdownConverter([
                 'html_input' => 'strip',
                 'allow_unsafe_links' => false,
@@ -177,7 +177,7 @@ class KnowledgeManager
         $cacheKey = "knowledge.docs.plain.{$package}.{$languageCode}.".md5($relativePath).'.'.filemtime($fullPath);
 
         return Cache::remember($cacheKey, 3600, function () use ($fullPath): string {
-            $markdown = Blade::render(file_get_contents($fullPath));
+            $markdown = $this->renderBlade(file_get_contents($fullPath));
             $converter = new GithubFlavoredMarkdownConverter([
                 'html_input' => 'strip',
                 'allow_unsafe_links' => false,
@@ -185,6 +185,27 @@ class KnowledgeManager
 
             return strip_tags($converter->convert($markdown)->getContent());
         });
+    }
+
+    /**
+     * Code blocks and inline code hold Blade examples meant to be shown, not run,
+     * so they are masked while the rest of the document goes through Blade.
+     */
+    protected function renderBlade(string $markdown): string
+    {
+        $code = [];
+
+        $masked = preg_replace_callback(
+            '/^(`{3,}|~{3,}).*?^\1[ \t]*$|`[^`\n]+`/ms',
+            function (array $matches) use (&$code): string {
+                $code['KNOWLEDGECODEBLOCK'.count($code).'END'] = $matches[0];
+
+                return array_key_last($code);
+            },
+            $markdown
+        );
+
+        return strtr(Blade::render($masked), $code);
     }
 
     protected function searchDocsTree(
