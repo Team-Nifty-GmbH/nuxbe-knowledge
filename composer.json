@@ -32,7 +32,7 @@
     "prefer-stable": true,
     "require": {
         "php": "^8.5",
-        "team-nifty-gmbh/flux-erp": "^1.0",
+        "team-nifty-gmbh/flux-erp": "^1.12",
         "league/commonmark": "^2.0",
         "league/html-to-markdown": "^5.0",
         "jfcherng/php-diff": "^6.0"
