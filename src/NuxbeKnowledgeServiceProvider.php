@@ -8,7 +8,6 @@ use FluxErp\Facades\Menu;
 use FluxErp\Models\Category;
 use FluxErp\Models\Role;
 use FluxErp\Models\User;
-use FluxErp\View\Components\EditorButtons\ImageUpload;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Mcp\Facades\Mcp;
@@ -22,6 +21,7 @@ use TeamNiftyGmbH\NuxbeKnowledge\Models\KnowledgeCategoryUser;
 use TeamNiftyGmbH\NuxbeKnowledge\Models\KnowledgePackageAccess;
 use TeamNiftyGmbH\NuxbeKnowledge\Models\KnowledgePackageSetting;
 use TeamNiftyGmbH\NuxbeKnowledge\Support\KnowledgeManager;
+use TeamNiftyGmbH\NuxbeKnowledge\View\Components\EditorButtons\KnowledgeImageUpload;
 
 class NuxbeKnowledgeServiceProvider extends ServiceProvider
 {
@@ -136,7 +136,7 @@ class NuxbeKnowledgeServiceProvider extends ServiceProvider
 
     protected function registerEditorButtons(): void
     {
-        Editor::registerButton(ImageUpload::class);
+        Editor::registerButton(KnowledgeImageUpload::class);
     }
 
     protected function registerTranslationsAndViews(): void
