@@ -140,7 +140,7 @@
                     :request="['url' => route('search', \FluxErp\Models\Category::class), 'method' => 'POST', 'params' => ['where' => [['model_type', '=', morph_alias(\TeamNiftyGmbH\NuxbeKnowledge\Models\KnowledgeArticle::class)]]]]"
                 />
 
-                <x-flux::editor wire:model="articleForm.content" :label="__('Content')" class="min-h-[500px]" />
+                <x-flux::editor wire:model="articleForm.content" scope="knowledge" :label="__('Content')" class="min-h-[500px]" />
 
                 <div>
                     <x-flux::features.media.upload-form-object
