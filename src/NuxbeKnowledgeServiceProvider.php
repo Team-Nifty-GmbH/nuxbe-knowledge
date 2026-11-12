@@ -72,6 +72,16 @@ class NuxbeKnowledgeServiceProvider extends ServiceProvider
 
         $this->loadRoutesFrom(__DIR__.'/../routes/mcp.php');
 
+        // laravel/mcp 1.2 refuses browser origins it does not know. The claude.ai
+        // and claude.com connectors send theirs, so they have to stay accepted.
+        config([
+            'mcp.allowed_origins' => array_values(array_unique([
+                ...(array) config('mcp.allowed_origins', []),
+                'https://claude.ai',
+                'https://claude.com',
+            ])),
+        ]);
+
         if (class_exists('FluxAi\\Mcp\\Servers\\FluxServer')) {
             config([
                 'flux-ai.mcp.servers.tn_nuxbe_knowledge' => [
