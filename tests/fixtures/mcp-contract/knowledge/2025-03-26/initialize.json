@@ -1,0 +1,22 @@
+{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "result": {
+        "protocolVersion": "2025-03-26",
+        "capabilities": {
+            "tools": {
+                "listChanged": false
+            },
+            "resources": {
+                "listChanged": false
+            },
+            "prompts": {
+                "listChanged": false
+            }
+        },
+        "serverInfo": {
+            "name": "Nuxbe Knowledge Server",
+            "version": "1.0.0"
+        }
+    }
+}

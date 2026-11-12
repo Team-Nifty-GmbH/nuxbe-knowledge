@@ -1,0 +1,13 @@
+{
+    "jsonrpc": "2.0",
+    "id": 6,
+    "result": {
+        "content": [
+            {
+                "type": "text",
+                "text": "{\"results\":[{\"type\":\"article\",\"id\":9001,\"title\":\"VPN Zugang\",\"breadcrumb\":\"\",\"is_published\":true,\"source_type\":null,\"source_id\":null,\"snippet\":\"Client installieren und Profil laden.\"}]}"
+            }
+        ],
+        "isError": false
+    }
+}

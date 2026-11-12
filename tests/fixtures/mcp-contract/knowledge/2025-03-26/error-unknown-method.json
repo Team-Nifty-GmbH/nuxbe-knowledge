@@ -1,0 +1,8 @@
+{
+    "jsonrpc": "2.0",
+    "id": 17,
+    "error": {
+        "code": -32601,
+        "message": "The method [does/not-exist] was not found."
+    }
+}

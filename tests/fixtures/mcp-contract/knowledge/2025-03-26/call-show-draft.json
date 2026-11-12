@@ -1,0 +1,13 @@
+{
+    "jsonrpc": "2.0",
+    "id": 11,
+    "result": {
+        "content": [
+            {
+                "type": "text",
+                "text": "{\"id\":9002,\"title\":\"Drucker richtet sich nicht ein\",\"content_markdown\":null,\"is_published\":false,\"source_type\":\"ticket\",\"source_id\":4711}"
+            }
+        ],
+        "isError": false
+    }
+}
