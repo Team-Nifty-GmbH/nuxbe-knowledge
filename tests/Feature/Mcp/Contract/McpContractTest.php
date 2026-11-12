@@ -2,12 +2,11 @@
 
 use FluxErp\Models\Language;
 use FluxErp\Models\User;
-use Illuminate\Support\Arr;
 use TeamNiftyGmbH\NuxbeKnowledge\Models\KnowledgeArticle;
 use TeamNiftyGmbH\NuxbeKnowledge\Tests\Feature\Mcp\Contract\ContractClient;
 
 // Records the behaviour of every MCP server this package registers (UPDATE_MCP_CONTRACT=1
-// writes a missing or changed snapshot) and compares it on every later run.
+// writes a missing or changed snapshot; never after the upgrade) and compares it on every later run.
 // Order is part of the contract, nothing is sorted. Accepted differences are listed
 // in allowed-differences.php, one entry each, with a reason.
 
@@ -64,25 +63,67 @@ function mcpContractNormalise(mixed $value): mixed
     return $value;
 }
 
-function mcpContractAssert(string $server, string $protocol, string $case, mixed $actual): void
+function mcpContractForget(array &$data, array $segments): void
 {
-    $actual = mcpContractNormalise($actual);
+    $segment = array_shift($segments);
 
-    foreach (require __DIR__.'/allowed-differences.php' as $allowed) {
-        if ($allowed['server'] === $server && $allowed['protocol'] === $protocol && $allowed['case'] === $case) {
-            Arr::forget($actual, $allowed['path']);
+    if ($segment === '*') {
+        foreach (array_keys($data) as $key) {
+            if ($segments === []) {
+                unset($data[$key]);
+            } elseif (is_array($data[$key])) {
+                mcpContractForget($data[$key], $segments);
+            }
         }
+
+        return;
     }
 
+    if (! array_key_exists($segment, $data)) {
+        return;
+    }
+
+    if ($segments === []) {
+        unset($data[$segment]);
+    } elseif (is_array($data[$segment])) {
+        mcpContractForget($data[$segment], $segments);
+    }
+}
+
+function mcpContractAllow(string $server, string $protocol, string $case, array $data): array
+{
+    foreach (require __DIR__.'/allowed-differences.php' as $allowed) {
+        $matches = $allowed['server'] === $server
+            && ($allowed['protocol'] === '*' || $allowed['protocol'] === $protocol)
+            && ($allowed['case'] === '*' || $allowed['case'] === $case);
+
+        if (! $matches) {
+            continue;
+        }
+
+        if ($allowed['path'] === '*') {
+            return ['<whole case allowed>'];
+        }
+
+        mcpContractForget($data, explode('.', $allowed['path']));
+    }
+
+    return $data;
+}
+
+function mcpContractAssert(string $server, string $protocol, string $case, array $actual): void
+{
     $file = dirname(__DIR__, 3).'/fixtures/mcp-contract/'.$server.'/'.$protocol.'/'.str_replace('/', '_', $case).'.json';
-    $json = json_encode($actual, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)."\n";
 
     if (! is_file($file) || getenv('UPDATE_MCP_CONTRACT')) {
         @mkdir(dirname($file), 0755, true);
-        file_put_contents($file, $json);
+        file_put_contents($file, json_encode(mcpContractNormalise($actual), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)."\n");
     }
 
-    expect($json)->toBe(file_get_contents($file), "$server $protocol $case");
+    $expected = json_decode(file_get_contents($file), true);
+
+    expect(mcpContractAllow($server, $protocol, $case, mcpContractNormalise($actual)))
+        ->toBe(mcpContractAllow($server, $protocol, $case, $expected), "$server $protocol $case");
 }
 
 foreach (MCP_CONTRACT_SERVERS as $server => $uri) {
