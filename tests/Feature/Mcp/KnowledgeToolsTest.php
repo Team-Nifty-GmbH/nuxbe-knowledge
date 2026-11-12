@@ -158,6 +158,22 @@ test('update revises an article and keeps a version', function (): void {
         ->and($article->versions()->count())->toBe(1);
 });
 
+test('update is refused without the action permission', function (): void {
+    $article = KnowledgeArticle::factory()->create(['title' => 'Alt']);
+    $permission = Permission::findOrCreate('action.knowledge_article.update');
+    $role = Role::findOrCreate('Ohne Wiki Update', $permission->guard_name);
+    $this->user->assignRole($role);
+
+    KnowledgeServer::actingAs($this->user)
+        ->tool(UpdateKnowledgeArticleTool::class, [
+            'id' => $article->getKey(),
+            'title' => 'Darf nicht',
+        ])
+        ->assertHasErrors();
+
+    expect($article->fresh()->title)->toBe('Alt');
+});
+
 test('update refuses a locked article', function (): void {
     $article = KnowledgeArticle::factory()->create(['is_locked' => true, 'title' => 'Gesperrt']);
 
