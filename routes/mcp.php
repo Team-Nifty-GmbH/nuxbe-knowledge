@@ -9,8 +9,8 @@ use TeamNiftyGmbH\NuxbeKnowledge\Mcp\Servers\KnowledgeServer;
 // per tool regardless of which of the two guards let the request in.
 // Named as strings on purpose: an import would read like a dependency on flux-ai,
 // and this package must not have one.
-$middleware = class_exists('FluxAi\\Http\\Middleware\\McpOAuthOrSanctum')
-    ? ['FluxAi\\Http\\Middleware\\McpOAuthOrSanctum', 'FluxAi\\Http\\Middleware\\EnsureMcpEnabled']
+$middleware = class_exists('NuxbeAi\\Http\\Middleware\\McpOAuthOrSanctum')
+    ? ['NuxbeAi\\Http\\Middleware\\McpOAuthOrSanctum', 'NuxbeAi\\Http\\Middleware\\EnsureMcpEnabled']
     : ['auth:sanctum'];
 
 Mcp::web('/nuxbe-mcp/knowledge', KnowledgeServer::class)->middleware($middleware);

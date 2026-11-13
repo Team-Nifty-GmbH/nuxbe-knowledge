@@ -82,7 +82,7 @@ class NuxbeKnowledgeServiceProvider extends ServiceProvider
             ])),
         ]);
 
-        if (class_exists('FluxAi\\Mcp\\Servers\\FluxServer')) {
+        if (class_exists('NuxbeAi\\Mcp\\Servers\\FluxServer')) {
             config([
                 'flux-ai.mcp.servers.tn_nuxbe_knowledge' => [
                     'name' => 'nuxbe-knowledge',

@@ -198,7 +198,7 @@ test('every tool needs an authenticated user', function (string $tool, array $ar
 
 test('the mcp endpoint is registered even without flux-ai', function (): void {
     // flux-ai is not installed here, so this also covers the sanctum fallback.
-    expect(class_exists('FluxAi\\Mcp\\Servers\\FluxServer'))->toBeFalse()
+    expect(class_exists('NuxbeAi\\Mcp\\Servers\\FluxServer'))->toBeFalse()
         ->and(collect(app('router')->getRoutes()->getRoutes())
             ->contains(fn ($route): bool => $route->uri() === 'nuxbe-mcp/knowledge'))
         ->toBeTrue();
