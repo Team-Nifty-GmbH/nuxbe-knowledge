@@ -1,0 +1,13 @@
+{
+    "jsonrpc": "2.0",
+    "id": 10,
+    "result": {
+        "content": [
+            {
+                "type": "text",
+                "text": "{\"id\":9001,\"title\":\"VPN Zugang\",\"content_markdown\":null,\"is_published\":true,\"source_type\":null,\"source_id\":null}"
+            }
+        ],
+        "isError": false
+    }
+}

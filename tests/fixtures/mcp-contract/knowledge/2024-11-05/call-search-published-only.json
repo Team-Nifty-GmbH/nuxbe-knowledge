@@ -1,0 +1,13 @@
+{
+    "jsonrpc": "2.0",
+    "id": 8,
+    "result": {
+        "content": [
+            {
+                "type": "text",
+                "text": "{\"results\":[]}"
+            }
+        ],
+        "isError": false
+    }
+}

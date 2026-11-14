@@ -1,0 +1,8 @@
+{
+    "jsonrpc": "2.0",
+    "id": 16,
+    "error": {
+        "code": -32602,
+        "message": "Tool [does-not-exist] not found."
+    }
+}

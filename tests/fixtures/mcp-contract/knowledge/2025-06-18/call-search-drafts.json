@@ -1,0 +1,13 @@
+{
+    "jsonrpc": "2.0",
+    "id": 7,
+    "result": {
+        "content": [
+            {
+                "type": "text",
+                "text": "{\"results\":[{\"type\":\"article\",\"id\":9002,\"title\":\"Drucker richtet sich nicht ein\",\"breadcrumb\":\"\",\"is_published\":false,\"source_type\":\"ticket\",\"source_id\":4711,\"snippet\":\"Treiber neu ziehen.\"}]}"
+            }
+        ],
+        "isError": false
+    }
+}

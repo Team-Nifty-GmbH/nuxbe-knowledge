@@ -1,0 +1,133 @@
+{
+    "jsonrpc": "2.0",
+    "id": 2,
+    "result": {
+        "tools": [
+            {
+                "name": "search-knowledge",
+                "title": "Search Knowledge Tool",
+                "description": "    Search the company knowledge base (wiki) for articles the acting user may see.\n    Returns id, title, breadcrumb, a snippet, is_published and, for condensed\n    articles, the source they came from.\n\n    Most of this wiki is condensed from closed tickets, and those articles are\n    drafts, so drafts are searched too unless published_only is set. Pass\n    source_type \"ticket\" to search only knowledge that came out of tickets.\n\n    Use it to answer questions from existing company knowledge before guessing.",
+                "inputSchema": {
+                    "properties": {
+                        "query": {
+                            "description": "What to look up in the knowledge base.",
+                            "type": "string"
+                        },
+                        "source_type": {
+                            "description": "Only articles condensed from this source, e.g. \"ticket\" or \"order\".",
+                            "type": "string"
+                        },
+                        "published_only": {
+                            "description": "Skip drafts. Off by default, because condensed knowledge is unpublished.",
+                            "type": "boolean"
+                        },
+                        "limit": {
+                            "description": "Maximum number of articles to return (default: 25, max: 100).",
+                            "type": "integer"
+                        }
+                    },
+                    "type": "object",
+                    "required": [
+                        "query"
+                    ]
+                },
+                "annotations": {
+                    "readOnlyHint": true
+                }
+            },
+            {
+                "name": "show-knowledge-article",
+                "title": "Show Knowledge Article Tool",
+                "description": "    Read the full markdown of a single knowledge base article by id. Only returns\n    articles the acting user may see. Drafts are readable, since condensed ticket\n    knowledge is unpublished by design; is_published says which one you got.",
+                "inputSchema": {
+                    "properties": {
+                        "id": {
+                            "description": "The knowledge article id, e.g. from search-knowledge.",
+                            "type": "integer"
+                        }
+                    },
+                    "type": "object",
+                    "required": [
+                        "id"
+                    ]
+                },
+                "annotations": {
+                    "readOnlyHint": true
+                }
+            },
+            {
+                "name": "create-knowledge-article",
+                "title": "Create Knowledge Article Tool",
+                "description": "    Write a new article into the knowledge base. Give it a title and the body as\n    markdown. It is created as a draft unless is_published is set, so a human\n    reviews it before it counts as company knowledge.\n\n    Only capture reusable knowledge, not one-off customer details. When the article\n    summarises a ticket or an order, pass source_type and source_id so the article\n    stays traceable back to it.",
+                "inputSchema": {
+                    "properties": {
+                        "title": {
+                            "description": "The article title.",
+                            "type": "string"
+                        },
+                        "content_markdown": {
+                            "description": "The article body as markdown.",
+                            "type": "string"
+                        },
+                        "is_published": {
+                            "description": "Publish right away instead of leaving a draft. Defaults to a draft.",
+                            "type": "boolean"
+                        },
+                        "source_type": {
+                            "description": "Morph alias of what this was condensed from, e.g. \"ticket\".",
+                            "type": "string"
+                        },
+                        "source_id": {
+                            "description": "Id of the source record named by source_type.",
+                            "type": "integer"
+                        },
+                        "change_summary": {
+                            "description": "Short note on where this article came from, kept with the version.",
+                            "type": "string"
+                        }
+                    },
+                    "type": "object",
+                    "required": [
+                        "title",
+                        "content_markdown"
+                    ]
+                },
+                "annotations": []
+            },
+            {
+                "name": "update-knowledge-article",
+                "title": "Update Knowledge Article Tool",
+                "description": "    Revise an existing knowledge base article. Pass only what changes; the previous\n    state is kept as a version. Refuses articles the acting user may not see and\n    articles that are locked.",
+                "inputSchema": {
+                    "properties": {
+                        "id": {
+                            "description": "Id of the article to revise, e.g. from search-knowledge.",
+                            "type": "integer"
+                        },
+                        "title": {
+                            "description": "New title. Left as is when omitted.",
+                            "type": "string"
+                        },
+                        "content_markdown": {
+                            "description": "New body as markdown. Left as is when omitted.",
+                            "type": "string"
+                        },
+                        "is_published": {
+                            "description": "Publish or unpublish the article.",
+                            "type": "boolean"
+                        },
+                        "change_summary": {
+                            "description": "Short note on what changed, kept with the version.",
+                            "type": "string"
+                        }
+                    },
+                    "type": "object",
+                    "required": [
+                        "id"
+                    ]
+                },
+                "annotations": []
+            }
+        ]
+    }
+}

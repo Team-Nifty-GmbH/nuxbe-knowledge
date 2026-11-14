@@ -1,0 +1,7 @@
+{
+    "status": 401,
+    "www_authenticate": "Bearer realm=\"mcp\", error=\"invalid_token\"",
+    "body": {
+        "message": "Unauthenticated."
+    }
+}

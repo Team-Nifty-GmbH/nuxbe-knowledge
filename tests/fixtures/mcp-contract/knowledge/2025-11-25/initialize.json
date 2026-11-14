@@ -1,0 +1,23 @@
+{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "result": {
+        "protocolVersion": "2025-11-25",
+        "capabilities": {
+            "tools": {
+                "listChanged": false
+            },
+            "resources": {
+                "listChanged": false
+            },
+            "prompts": {
+                "listChanged": false
+            }
+        },
+        "serverInfo": {
+            "name": "Nuxbe Knowledge Server",
+            "version": "1.0.0"
+        },
+        "instructions": "    Knowledge base (wiki) server for FluxErp.\n\n    Available tools:\n    - search-knowledge: Search the knowledge base for articles the acting user may see\n    - show-knowledge-article: Read the full markdown of a single article by id\n    - create-knowledge-article: Write a new article, a draft unless told otherwise\n    - update-knowledge-article: Revise an existing article\n\n    Most of this wiki is condensed from closed tickets and orders. Those articles\n    are written as drafts, so searching published articles only will find close to\n    nothing -- search covers drafts by default and reports is_published per hit.\n\n    A condensed article carries source_type and source_id pointing at what it was\n    condensed from. Pass source_type \"ticket\" to search only ticket knowledge, which\n    is the fastest route to \"have we seen this problem before\"."
+    }
+}

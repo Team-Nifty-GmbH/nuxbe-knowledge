@@ -158,6 +158,22 @@ test('update revises an article and keeps a version', function (): void {
         ->and($article->versions()->count())->toBe(1);
 });
 
+test('update is refused without the action permission', function (): void {
+    $article = KnowledgeArticle::factory()->create(['title' => 'Alt']);
+    $permission = Permission::findOrCreate('action.knowledge_article.update');
+    $role = Role::findOrCreate('Ohne Wiki Update', $permission->guard_name);
+    $this->user->assignRole($role);
+
+    KnowledgeServer::actingAs($this->user)
+        ->tool(UpdateKnowledgeArticleTool::class, [
+            'id' => $article->getKey(),
+            'title' => 'Darf nicht',
+        ])
+        ->assertHasErrors();
+
+    expect($article->fresh()->title)->toBe('Alt');
+});
+
 test('update refuses a locked article', function (): void {
     $article = KnowledgeArticle::factory()->create(['is_locked' => true, 'title' => 'Gesperrt']);
 
@@ -182,7 +198,7 @@ test('every tool needs an authenticated user', function (string $tool, array $ar
 
 test('the mcp endpoint is registered even without flux-ai', function (): void {
     // flux-ai is not installed here, so this also covers the sanctum fallback.
-    expect(class_exists('FluxAi\\Mcp\\Servers\\FluxServer'))->toBeFalse()
+    expect(class_exists('NuxbeAi\\Mcp\\Servers\\FluxServer'))->toBeFalse()
         ->and(collect(app('router')->getRoutes()->getRoutes())
             ->contains(fn ($route): bool => $route->uri() === 'nuxbe-mcp/knowledge'))
         ->toBeTrue();

@@ -1,0 +1,13 @@
+{
+    "jsonrpc": "2.0",
+    "id": 13,
+    "result": {
+        "content": [
+            {
+                "type": "text",
+                "text": "Article not found or not accessible."
+            }
+        ],
+        "isError": true
+    }
+}
