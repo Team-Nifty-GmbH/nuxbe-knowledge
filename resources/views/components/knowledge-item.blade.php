@@ -18,8 +18,8 @@
         <div
             x-data="{ subOpen: @js($isSearching) }"
             x-init="
-                $watch('isSearching', (value) => {
-                    if (value) subOpen = true
+                $watch('$wire.search', (value) => {
+                    if (value.length > 0) subOpen = true
                 })
             "
             class="w-full"
