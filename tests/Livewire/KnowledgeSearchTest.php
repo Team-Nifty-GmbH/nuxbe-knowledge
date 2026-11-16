@@ -59,3 +59,16 @@ test('clearing the sidebar search restores all entries', function (): void {
 
     expect($component->get('uncategorizedArticles'))->toHaveCount(2);
 });
+
+test('package doc directories open on search through the livewire search property', function (): void {
+    app(KnowledgeManager::class)->registerDocs(
+        package: 'test-package',
+        path: __DIR__.'/../fixtures/docs',
+        label: 'Test Docs',
+    );
+
+    Livewire::actingAs($this->user)
+        ->test(Knowledge::class)
+        ->assertSeeHtml('subOpen: false')
+        ->assertDontSeeHtml("\$watch('isSearching'");
+});
