@@ -151,10 +151,8 @@ class NuxbeKnowledgeServiceProvider extends ServiceProvider
 
     protected function registerTranslationsAndViews(): void
     {
-        if (! $this->app->runningInConsole()) {
-            $this->loadJsonTranslationsFrom(__DIR__.'/../lang');
-            $this->loadViewsFrom(__DIR__.'/../resources/views', 'nuxbe-knowledge');
-        }
+        $this->loadJsonTranslationsFrom(__DIR__.'/../lang');
+        $this->loadViewsFrom(__DIR__.'/../resources/views', 'nuxbe-knowledge');
     }
 
     protected function registerCategoryRelations(): void

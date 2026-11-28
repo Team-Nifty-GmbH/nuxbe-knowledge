@@ -64,9 +64,6 @@ abstract class TestCase extends BaseTestCase
         $app['config']->set('auth.defaults.guard', 'sanctum');
         $app['config']->set('cache.default', 'array');
         $app['config']->set('settings.auto_discover_settings', []);
-
-        $app['view']->addNamespace('nuxbe-knowledge', __DIR__.'/../resources/views');
-        $app['translator']->addJsonPath(__DIR__.'/../lang');
     }
 
     protected function getPackageAliases($app): array
